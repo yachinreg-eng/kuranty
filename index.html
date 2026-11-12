@@ -184,10 +184,29 @@ kbd { font: 500 0.78rem var(--ui); border: 1px solid var(--line); border-radius:
     <p class="hint">Играет весь вечер и само затихает перед перезвоном: радиостанции передают куранты с задержкой, и без этого бой звучал бы дважды. Работает в версии на GitHub Pages; по ссылке claude.ai потоки заблокированы.</p>
     <label class="field">Станция
       <select id="radioSel">
-        <option value="https://radiorecord.hostingradio.ru/christmas96.aacp">Радио Рекорд — Christmas</option>
-        <option value="https://xmas-node1.zip.wf/live.aac">Christmas FM Non-stop</option>
-        <option value="https://christmasfm.cdnstream1.com/2550_128.mp3">Classical Christmas FM</option>
-        <option value="https://listen.181fm.com/181-xsmooth_128k.mp3">181.FM — Christmas Smooth Jazz</option>
+        <optgroup label="Новогодние">
+          <option value="https://radiorecord.hostingradio.ru/christmas96.aacp">Радио Рекорд — Christmas</option>
+          <option value="https://xmas-node1.zip.wf/live.aac">Christmas FM Non-stop</option>
+          <option value="https://christmasfm.cdnstream1.com/2550_128.mp3">Classical Christmas FM</option>
+          <option value="https://listen.181fm.com/181-xsmooth_128k.mp3">181.FM — Christmas Smooth Jazz</option>
+        </optgroup>
+        <optgroup label="Популярные">
+          <option value="https://europaplus.hostingradio.ru:8014/europaplus320.mp3">Европа Плюс</option>
+          <option value="https://gpm.hostingradio.ru/gpm-avtoradio495.aacp">Авторадио</option>
+          <option value="https://gpm.hostingradio.ru/gpm-energyfm495.aacp">Радио Energy</option>
+          <option value="https://rusradio.hostingradio.ru/rusradio96.aacp">Русское радио</option>
+          <option value="https://retro.hostingradio.ru:8014/retro320.mp3">Ретро FM</option>
+          <option value="https://retro80.hostingradio.ru:8025/retro80-128.mp3">Ретро FM — 80-е</option>
+          <option value="https://hitfm.hostingradio.ru/hitfm128.mp3">Хит FM</option>
+          <option value="https://dfm.hostingradio.ru/dfm96.aacp">DFM</option>
+          <option value="https://radiorecord.hostingradio.ru/rr_main96.aacp">Радио Рекорд</option>
+          <option value="https://dorognoe.hostingradio.ru/dorognoe_acc">Дорожное радио</option>
+          <option value="https://nashe1.hostingradio.ru:80/nashe-128.mp3">Наше радио</option>
+          <option value="https://chanson.hostingradio.ru:8041/chanson256.mp3">Радио Шансон</option>
+          <option value="https://gpm.hostingradio.ru/gpm-humorfm495.aacp">Юмор FM</option>
+          <option value="https://gpm.hostingradio.ru/gpm-relaxfm495.aacp">Relax FM</option>
+          <option value="https://icecast-vgtrk.cdnvideo.ru/mayakfm">Радио Маяк</option>
+        </optgroup>
         <option value="custom">Свой адрес потока…</option>
       </select>
     </label>
@@ -986,7 +1005,11 @@ const RADIO = {
   }
 };
 RADIO.el.preload = "none";
-RADIO.el.addEventListener("playing", () => { RADIO.playing = true; RADIO.okAt = Date.now(); RADIO.status("Играет"); });
+RADIO.el.addEventListener("playing", () => {
+  RADIO.playing = true; RADIO.okAt = Date.now();
+  const opt = [...$("radioSel").options].find(o => o.value === RADIO.url);
+  RADIO.status("Играет" + (opt ? ": " + opt.textContent : ""));
+});
 RADIO.el.addEventListener("timeupdate", () => { if (RADIO.playing) RADIO.okAt = Date.now(); });
 RADIO.el.addEventListener("waiting", () => { if (RADIO.on && !RADIO.muted) RADIO.status("Буферизация…"); });
 RADIO.el.addEventListener("error", () => {
@@ -1193,6 +1216,7 @@ $("radioSel").addEventListener("change", e => {
   if (v === "custom") { $("radioUrl").focus(); return; }
   RADIO.url = v; store.set("radioUrl", v);
   if (RADIO.on && !RADIO.muted) RADIO.start();
+  else if (!RADIO.on) radioEnable(true);   // выбрали станцию — сразу включаем
 });
 $("radioUrl").addEventListener("change", e => {
   const v = e.target.value.trim();
