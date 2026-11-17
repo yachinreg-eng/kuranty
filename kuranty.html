@@ -370,12 +370,14 @@ function H(a, b) {
 const MAXZ = VIEW_IDLE.h / VIEW_DIAL.h;
 
 /* ---------- поздравление Деда Мороза и Снегурочки ---------- */
-// Голос записан заранее (TTS, женский «Ирина»), реплики идут подряд с паузами.
+// Голос синтезирован заранее: Дед Мороз — ru-RU-DmitryNeural, Снегурочка —
+// ru-RU-SvetlanaNeural. Каждая реплика лежит отдельным mp3, поэтому паузы и
+// субтитры считаются по фактической длине буферов, а не по таблице в коде.
 // Карточка в пустой левой части неба появляется за GREET.lead секунд до боя
 // курантов, показывает ту же фразу, что звучит, и уходит с первым ударом.
 const GREET = {
   lead: 150,
-  src: "greeting.wav",
+  srcs: ["greet1.mp3", "greet2.mp3", "greet3.mp3", "greet4.mp3", "greet5.mp3"],
   lines: [
     "Здравствуйте, дорогие друзья!",
     "Мы пришли к вам в этот зимний вечер, чтобы пожелать счастья и удачи.",
@@ -383,8 +385,20 @@ const GREET = {
     "Пусть куранты пробьют двенадцать, и всё загаданное исполнится!",
     "С Новым годом, дорогие наши!"
   ],
-  cues: [[0, 3.38], [3.83, 11.12], [11.57, 16.74], [17.19, 24.21], [24.66, 27.95]],
-  total: 27.95,
+  who: ["Снегурочка", "Дед Мороз", "Снегурочка", "Дед Мороз", "Дед Мороз"],
+  gap: 0.55,
+  cues: [[0, 4], [4.55, 10], [10.55, 17], [17.55, 24], [24.55, 28]],
+  total: 28,
+  // после загрузки буферов тайминги уточняются под реальные длительности
+  measure(buffers) {
+    let at = 0;
+    this.cues = buffers.map(b => {
+      const c = [at, at + b.duration];
+      at = c[1] + this.gap;
+      return c;
+    });
+    this.total = this.cues[this.cues.length - 1][1];
+  },
   line(t) {
     let i = 0;
     for (let k = 0; k < this.cues.length; k++) if (t >= this.cues[k][0]) i = k;
@@ -1093,7 +1107,14 @@ function greetingCard(st) {
     if (lines.length * fs * 1.34 <= availH) break;
     fs *= 0.94;
   }
+  // кто говорит — мелкой золотой строкой между сценкой и репликой
+  g.font = serifCard(ch * 0.034);
+  try { g.letterSpacing = (1.6 * uu).toFixed(1) + "px"; } catch (e) {}
+  g.fillStyle = goldA(0.55);
+  g.fillText(GREET.who[idx].toUpperCase(), X + cw / 2, Y + ch * 0.626);
+  try { g.letterSpacing = "0px"; } catch (e) {}
   const lh = fs * 1.34, ty0 = Y + ch * 0.652 + lh * 0.5;
+  g.font = serifCard(fs);
   g.fillStyle = GOLD_PALE;
   g.shadowColor = "rgba(255,150,60,0.45)"; g.shadowBlur = 10 * uu;
   lines.forEach((ln, i) => g.fillText(ln, X + cw / 2, ty0 + i * lh));
@@ -1351,8 +1372,10 @@ const AUD = {
       .then(ab => this.decode(ab)).then(b => { this.anthemBuiltin = b; if (!this.melody) $("melStatus").textContent = "Встроенный гимн · " + fmtDur(b.duration); })
       .catch(() => { this.anthemFailed = true; if (!this.melody) $("melStatus").textContent = "Встроенный гимн не загрузился"; });
     // Голос поздравления (Дед Мороз и Снегурочка) — маленький wav, грузится сразу.
-    fetch(ASSET + GREET.src).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
-      .then(ab => this.decode(ab)).then(b => { this.greetBuf = b; }).catch(() => {});
+    Promise.all(GREET.srcs.map(src =>
+      fetch(ASSET + src).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+        .then(ab => this.decode(ab))
+    )).then(bufs => { this.greetBufs = bufs; GREET.measure(bufs); }).catch(() => {});
     // Запись боя качается в фоне: сцена уже идёт, до полуночи звук успеет загрузиться.
     this.loading = true;
     fetch(ASSET + "kuranty.mp4")
@@ -1414,9 +1437,12 @@ const AUD = {
     if (pre) once("pre", pre, midnight - a - preLead - pre.duration, this.preGain);
     once("rec", this.rec, midnight - a);
     // поздравление: голос стартует от фактического момента, субтитры идут за ним
-    if (this.greetBuf && this.greetAt == null) {
+    if (this.greetBufs && this.greetAt == null) {
       const inWindow = t > midnight - GREET.lead && t < midnight - 95;
-      if (inWindow || (demo && t > midnight - 90)) { this.greetAt = t; this.play(this.greetBuf, 0); }
+      if (inWindow || (demo && t > midnight - 90)) {
+        this.greetAt = t;
+        this.greetBufs.forEach((b, i) => this.play(b, GREET.cues[i][0]));
+      }
     }
     if (this.greetAt != null && t > midnight + 5) this.greetAt = null;
     once("mel", this.anthem, midnight + last + melodyPause);
@@ -1448,6 +1474,8 @@ const RADIO = {
   vol: store.get("radioVol", 0.8),
   resume: store.get("radioResume", true),
   playing: false, muted: false, okAt: 0, fadeTimer: 0, retryTimer: 0,
+  duck: 1,          // приглушение под голос поздравления
+  applyVol() { try { this.el.volume = clamp(this.vol * this.duck, 0, 1); } catch (e) {} },
   covering() { return this.on && this.okAt > 0 && Date.now() - this.okAt < 60000; },
   // короткое имя станции для виджета на сцене
   label() {
@@ -1470,7 +1498,7 @@ const RADIO = {
     clearTimeout(this.retryTimer);
     if (!this.url) { this.status("Укажите адрес потока", true); return; }
     this.el.src = this.url;
-    try { this.el.volume = this.vol; } catch (e) {}
+    this.applyVol();
     this.status("Подключение…");
     const p = this.el.play();
     if (p && p.catch) p.catch(e => this.status("Не удалось включить: " + (e && e.name === "NotAllowedError" ? "нажмите кнопку ещё раз" : "поток недоступен"), true));
@@ -1483,10 +1511,20 @@ const RADIO = {
     this.fadeTimer = setInterval(() => {
       v -= this.vol / 30;
       if (v <= 0.01) { clearInterval(this.fadeTimer); end(); }
-      else try { this.el.volume = v; } catch (e) {}
+      else try { this.el.volume = clamp(v * this.duck, 0, 1); } catch (e) {}
     }, 100);
   },
   tick(t) {
+    // пока звучит поздравление — радио уходит на второй план
+    const greetOn = AUD.greetAt != null && t - AUD.greetAt < GREET.total + 1.5 && t >= AUD.greetAt;
+    const want = greetOn ? 0.16 : 1;
+    if (Math.abs(want - this.duck) > 0.004) {
+      this.duck += (want - this.duck) * 0.18;
+      this.applyVol();
+    } else if (this.duck !== want) {
+      this.duck = want;
+      this.applyVol();
+    }
     const w = this.window(t);
     const inWindow = t >= w.stop - 3 && t < w.back;
     if (this.on && inWindow && !this.muted) {
@@ -1724,7 +1762,7 @@ $("radioToggle").addEventListener("click", () => radioEnable(!RADIO.on));
 $("radioLead").value = RADIO.lead;
 $("radioLead").addEventListener("change", e => { RADIO.lead = Math.max(0, parseFloat(e.target.value) || 0); store.set("radioLead", RADIO.lead); updateRadioWhen(); });
 $("radioVol").value = RADIO.vol;
-$("radioVol").addEventListener("input", e => { RADIO.vol = parseFloat(e.target.value); store.set("radioVol", RADIO.vol); try { if (RADIO.playing) RADIO.el.volume = RADIO.vol; } catch (err) {} });
+$("radioVol").addEventListener("input", e => { RADIO.vol = parseFloat(e.target.value); store.set("radioVol", RADIO.vol); if (RADIO.playing) RADIO.applyVol(); });
 $("radioResume").addEventListener("change", e => { RADIO.resume = e.target.checked; store.set("radioResume", RADIO.resume); updateRadioWhen(); });
 syncRadioUi();
 if (RADIO.on) RADIO.status("Включится после нажатия «Начать»", true);
