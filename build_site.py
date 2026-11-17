@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "kuranty.html"
 OUT = ROOT / "site"
 ASSETS = ["photo.jpg", "photo_clock.jpg", "side_bg.jpg", "sky_mask.png",
-          "occl_R.png", "occl_L.png", "kuranty.mp4", "anthem.mp4"]
+          "occl_R.png", "occl_L.png", "kuranty.mp4", "anthem.mp4", "greeting.wav"]
 
 html = SRC.read_text(encoding="utf-8")
 head_part, body_part = html.split("<canvas", 1)

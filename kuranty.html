@@ -369,6 +369,29 @@ function H(a, b) {
 }
 const MAXZ = VIEW_IDLE.h / VIEW_DIAL.h;
 
+/* ---------- поздравление Деда Мороза и Снегурочки ---------- */
+// Голос записан заранее (TTS, женский «Ирина»), реплики идут подряд с паузами.
+// Карточка в пустой левой части неба появляется за GREET.lead секунд до боя
+// курантов, показывает ту же фразу, что звучит, и уходит с первым ударом.
+const GREET = {
+  lead: 150,
+  src: "greeting.wav",
+  lines: [
+    "Здравствуйте, дорогие друзья!",
+    "Мы пришли к вам в этот зимний вечер, чтобы пожелать счастья и удачи.",
+    "Пусть Новый год принесёт тепло в ваш дом и радость в каждый день.",
+    "Пусть куранты пробьют двенадцать, и всё загаданное исполнится!",
+    "С Новым годом, дорогие наши!"
+  ],
+  cues: [[0, 3.38], [3.83, 11.12], [11.57, 16.74], [17.19, 24.21], [24.66, 27.95]],
+  total: 27.95,
+  line(t) {
+    let i = 0;
+    for (let k = 0; k < this.cues.length; k++) if (t >= this.cues[k][0]) i = k;
+    return i;
+  }
+};
+
 function frameState(t) {
   const msk = t + MSK_OFF;
   const sod = ((msk % 86400) + 86400) % 86400;
@@ -405,8 +428,11 @@ function frameState(t) {
   // конфетти — короткий залп через пару секунд после того, как отзвучал гимн
   const anthemEnd = last + melodyPause + gLen;
   const confT = dt > anthemEnd && dt < anthemEnd + 4.5 ? dt - anthemEnd : null;
+  // поздравление: секунды с его начала; видно от появления до первого удара
+  const grt = AUD.greetAt != null ? t - AUD.greetAt : dt + GREET.lead;
+  const greet = (isNY || demo) && grt >= 0 ? grt : null;
   return {
-    msk, sod, dt, k, zoom, view, pulse, strikesDone, hourIdx: hour % 12, confT,
+    msk, sod, dt, k, zoom, view, pulse, strikesDone, hourIdx: hour % 12, confT, greet,
     fwT: dt > last + melodyPause && dt < 900 ? dt - last - melodyPause : null,
     greetA, year, toNY: Date.UTC(nowY + 1, 0, 1) / 1000 - msk, anim: msk % 345600,
     minuteA: (sod % 3600) / 3600 * TAU, hourA: (sod % 43200) / 43200 * TAU
@@ -855,8 +881,233 @@ function radioWidget(st, hudA, uu) {
   }
   g.restore();
 }
-function overlays(st) {
+/* ---------- открытка с поздравлением ---------- */
+function roundRect(x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+  g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+  g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+  g.closePath();
+}
+function wrapText(text, maxW) {
+  const words = text.split(" "), lines = [];
+  let cur = "";
+  for (const w of words) {
+    const t = cur ? cur + " " + w : w;
+    if (cur && g.measureText(t).width > maxW) { lines.push(cur); cur = w; }
+    else cur = t;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+// Силуэты: тёмные фигуры на тёплом свете — читаются узнаваемо при любом размере.
+function figureDedMoroz(bx, by, s) {
+  // шуба с явными плечами и шеей: иначе силуэт читается как конус
+  g.beginPath();
+  g.moveTo(bx - s * 0.225, by);
+  g.lineTo(bx - s * 0.195, by - s * 0.30);
+  g.lineTo(bx - s * 0.170, by - s * 0.49);
+  g.lineTo(bx - s * 0.140, by - s * 0.535);
+  g.quadraticCurveTo(bx - s * 0.085, by - s * 0.565, bx - s * 0.046, by - s * 0.575);
+  g.lineTo(bx - s * 0.046, by - s * 0.615);
+  g.lineTo(bx + s * 0.046, by - s * 0.615);
+  g.lineTo(bx + s * 0.046, by - s * 0.575);
+  g.quadraticCurveTo(bx + s * 0.085, by - s * 0.565, bx + s * 0.140, by - s * 0.535);
+  g.lineTo(bx + s * 0.170, by - s * 0.49);
+  g.lineTo(bx + s * 0.195, by - s * 0.30);
+  g.lineTo(bx + s * 0.225, by);
+  g.quadraticCurveTo(bx, by + s * 0.05, bx - s * 0.225, by);
+  g.closePath(); g.fill();
+  // борода: расширяется под подбородком и читается на груди
+  g.beginPath();
+  g.moveTo(bx - s * 0.088, by - s * 0.625);
+  g.quadraticCurveTo(bx - s * 0.058, by - s * 0.44, bx, by - s * 0.405);
+  g.quadraticCurveTo(bx + s * 0.058, by - s * 0.44, bx + s * 0.088, by - s * 0.625);
+  g.closePath(); g.fill();
+  // голова
+  g.beginPath(); g.arc(bx, by - s * 0.665, s * 0.086, 0, TAU); g.fill();
+  // меховая шапка с опушкой и помпоном
+  g.beginPath();
+  g.moveTo(bx - s * 0.128, by - s * 0.715);
+  g.quadraticCurveTo(bx - s * 0.10, by - s * 0.855, bx + s * 0.015, by - s * 0.885);
+  g.quadraticCurveTo(bx + s * 0.115, by - s * 0.845, bx + s * 0.128, by - s * 0.715);
+  g.closePath(); g.fill();
+  g.fillRect(bx - s * 0.142, by - s * 0.742, s * 0.284, s * 0.048);
+  g.beginPath(); g.arc(bx + s * 0.02, by - s * 0.892, s * 0.032, 0, TAU); g.fill();
+  // посох
+  g.fillRect(bx - s * 0.325, by - s * 0.885, s * 0.022, s * 0.885);
+  g.beginPath(); g.arc(bx - s * 0.314, by - s * 0.91, s * 0.038, 0, TAU); g.fill();
+}
+function figureSnegurochka(bx, by, s) {
+  // сарафан: узкие плечи, шея, клёш
+  g.beginPath();
+  g.moveTo(bx - s * 0.170, by);
+  g.lineTo(bx - s * 0.145, by - s * 0.29);
+  g.lineTo(bx - s * 0.118, by - s * 0.475);
+  g.lineTo(bx - s * 0.095, by - s * 0.515);
+  g.quadraticCurveTo(bx - s * 0.055, by - s * 0.545, bx - s * 0.032, by - s * 0.555);
+  g.lineTo(bx - s * 0.032, by - s * 0.595);
+  g.lineTo(bx + s * 0.032, by - s * 0.595);
+  g.lineTo(bx + s * 0.032, by - s * 0.555);
+  g.quadraticCurveTo(bx + s * 0.055, by - s * 0.545, bx + s * 0.095, by - s * 0.515);
+  g.lineTo(bx + s * 0.118, by - s * 0.475);
+  g.lineTo(bx + s * 0.145, by - s * 0.29);
+  g.lineTo(bx + s * 0.170, by);
+  g.quadraticCurveTo(bx, by + s * 0.04, bx - s * 0.170, by);
+  g.closePath(); g.fill();
+  // коса
+  g.beginPath();
+  g.moveTo(bx + s * 0.05, by - s * 0.575);
+  g.quadraticCurveTo(bx + s * 0.135, by - s * 0.35, bx + s * 0.095, by - s * 0.10);
+  g.lineTo(bx + s * 0.05, by - s * 0.12);
+  g.quadraticCurveTo(bx + s * 0.08, by - s * 0.355, bx + s * 0.015, by - s * 0.575);
+  g.closePath(); g.fill();
+  // голова
+  g.beginPath(); g.arc(bx, by - s * 0.645, s * 0.074, 0, TAU); g.fill();
+  // кокошник
+  g.beginPath();
+  g.moveTo(bx - s * 0.095, by - s * 0.678);
+  g.quadraticCurveTo(bx - s * 0.065, by - s * 0.875, bx, by - s * 0.912);
+  g.quadraticCurveTo(bx + s * 0.065, by - s * 0.875, bx + s * 0.095, by - s * 0.678);
+  g.closePath(); g.fill();
+}
+function lantern(lx, ly, s) {
+  g.fillStyle = "rgba(6,8,16,0.98)";
+  g.fillRect(lx - s * 0.004, ly - s * 0.14, s * 0.009, s * 0.14);
+  g.beginPath(); g.arc(lx, ly, s * 0.042, 0, TAU); g.fill();
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  const lg = g.createRadialGradient(lx, ly, 0, lx, ly, s * 0.26);
+  lg.addColorStop(0, "rgba(255,200,128,0.7)");
+  lg.addColorStop(0.45, "rgba(255,160,70,0.20)");
+  lg.addColorStop(1, "rgba(255,150,60,0)");
+  g.fillStyle = lg; g.beginPath(); g.arc(lx, ly, s * 0.26, 0, TAU); g.fill();
+  g.restore();
+  g.fillStyle = "rgba(255,228,160,0.95)";
+  g.beginPath(); g.arc(lx, ly, s * 0.019, 0, TAU); g.fill();
+}
+function greetingCard(st) {
+  const t = st.greet;
+  if (t == null) return;
   const uu = Math.max(Math.min(W / 1920, Hh / 1080), 0.42);
+  const wide = W / Hh > 1.2;
+  const ch = (wide ? 0.60 : 0.38) * Hh, cw = ch * 0.72;
+  const X = wide ? Math.min(W * 0.055, W - cw - 24 * uu) : (W - cw) / 2;
+  const Y = wide ? Hh * 0.43 - ch / 2 : Hh * 0.10;
+  const a = smooth(t / 1.3) * (1 - smooth((st.dt + 66) / 8));
+  if (a <= 0.004) return;
+  const serifCard = px => `600 ${Math.round(px)}px "Cormorant Garamond", Georgia, serif`;
+  g.save();
+  g.globalAlpha = a;
+  // мягкое сияние вокруг открытки
+  g.globalCompositeOperation = "lighter";
+  const halo = g.createRadialGradient(X + cw / 2, Y + ch / 2, 0, X + cw / 2, Y + ch / 2, ch * 0.78);
+  halo.addColorStop(0, goldA(0.10)); halo.addColorStop(1, goldA(0));
+  g.fillStyle = halo; g.fillRect(X - ch * 0.6, Y - ch * 0.6, cw + ch * 1.2, ch + ch * 1.2);
+  g.globalCompositeOperation = "source-over";
+  // полотно открытки
+  const bgGrad = g.createLinearGradient(X, Y, X, Y + ch);
+  bgGrad.addColorStop(0, "rgba(11,14,26,0.975)");
+  bgGrad.addColorStop(0.55, "rgba(15,18,32,0.975)");
+  bgGrad.addColorStop(1, "rgba(9,11,20,0.985)");
+  roundRect(X, Y, cw, ch, 14 * uu);
+  g.fillStyle = bgGrad; g.fill();
+  g.strokeStyle = goldA(0.55); g.lineWidth = 1.4; g.stroke();
+  roundRect(X + 6 * uu, Y + 6 * uu, cw - 12 * uu, ch - 12 * uu, 10 * uu);
+  g.strokeStyle = goldA(0.22); g.lineWidth = 1; g.stroke();
+  // сцена внутри рамки
+  g.save();
+  roundRect(X + 6 * uu, Y + 6 * uu, cw - 12 * uu, ch - 12 * uu, 10 * uu);
+  g.clip();
+  const sy = Y + ch * 0.615;
+  g.globalCompositeOperation = "lighter";
+  const warm = g.createRadialGradient(X + cw * 0.5, sy - ch * 0.02, 0, X + cw * 0.5, sy - ch * 0.02, cw * 0.72);
+  warm.addColorStop(0, "rgba(255,178,96,0.46)");
+  warm.addColorStop(0.45, "rgba(255,150,70,0.18)");
+  warm.addColorStop(1, "rgba(255,150,70,0)");
+  g.fillStyle = warm; g.fillRect(X, Y, cw, ch);
+  g.globalCompositeOperation = "source-over";
+  // луна в небе открытки
+  const mnx = X + cw * 0.76, mny = Y + ch * 0.16, mr = cw * 0.045;
+  g.globalCompositeOperation = "lighter";
+  const mgl = g.createRadialGradient(mnx, mny, mr * 0.6, mnx, mny, mr * 4);
+  mgl.addColorStop(0, "rgba(255,246,224,0.22)");
+  mgl.addColorStop(1, "rgba(255,246,224,0)");
+  g.fillStyle = mgl; g.beginPath(); g.arc(mnx, mny, mr * 4, 0, TAU); g.fill();
+  g.globalCompositeOperation = "source-over";
+  g.fillStyle = "rgba(255,248,228,0.82)"; g.beginPath(); g.arc(mnx, mny, mr, 0, TAU); g.fill();
+  // снежный наст
+  g.beginPath();
+  g.moveTo(X, sy + ch * 0.02);
+  g.quadraticCurveTo(X + cw * 0.35, sy - ch * 0.035, X + cw * 0.6, sy + ch * 0.005);
+  g.quadraticCurveTo(X + cw * 0.85, sy + ch * 0.035, X + cw, sy + ch * 0.01);
+  g.lineTo(X + cw, Y + ch); g.lineTo(X, Y + ch);
+  g.closePath();
+  g.fillStyle = "rgba(16,20,34,0.95)"; g.fill();
+  // ёлочки
+  g.fillStyle = "rgba(8,12,20,0.95)";
+  const fir = (fx2, fy2, fw, fh) => {
+    for (let i = 0; i < 3; i++) {
+      const w = fw * (1 - i * 0.22), yy = fy2 - fh * (0.26 + i * 0.24);
+      g.beginPath(); g.moveTo(fx2, yy - fh * 0.34); g.lineTo(fx2 + w, yy); g.lineTo(fx2 - w, yy); g.closePath(); g.fill();
+    }
+  };
+  fir(X + cw * 0.12, sy + ch * 0.01, ch * 0.032, ch * 0.16);
+  fir(X + cw * 0.21, sy + ch * 0.005, ch * 0.024, ch * 0.12);
+  fir(X + cw * 0.88, sy + ch * 0.02, ch * 0.030, ch * 0.145);
+  // фигуры: тёплый контровой свет, поверх — тёмный силуэт
+  const dmX = X + cw * 0.42, dmY = sy + ch * 0.03, dmS = ch * 0.245;
+  const smX = X + cw * 0.635, smY = sy + ch * 0.03, smS = ch * 0.225;
+  g.save();
+  g.translate(-1.6, -1.6);
+  g.fillStyle = "rgba(255,198,132,0.45)";
+  figureDedMoroz(dmX, dmY, dmS); figureSnegurochka(smX, smY, smS);
+  g.restore();
+  g.fillStyle = "rgba(6,8,16,0.98)";
+  figureDedMoroz(dmX, dmY, dmS); figureSnegurochka(smX, smY, smS);
+  // фонарик в руке Снегурочки — единственный тёплый огонёк сцены
+  lantern(smX - smS * 0.19, smY - smS * 0.30, smS);
+  // снег внутри открытки
+  g.fillStyle = "rgba(255,250,240,0.75)";
+  for (let i = 0; i < 26; i++) {
+    const fx = H(i, 71), sp = 0.03 + H(i, 72) * 0.05;
+    const fy = ((H(i, 73) + t * sp + i * 0.11) % 1) * (sy - Y);
+    const r = (0.5 + H(i, 74) * 1.1) * uu;
+    g.beginPath(); g.arc(X + fx * cw, Y + fy, r, 0, TAU); g.fill();
+  }
+  g.restore();
+  // текст: текущая реплика, кегль подбирается так, чтобы влезло не больше четырёх строк
+  const idx = GREET.line(t);
+  g.textAlign = "center"; g.textBaseline = "middle";
+  const maxW = cw * 0.84, availH = ch * 0.295;
+  let fs = ch * 0.070, lines = [];
+  for (let guard = 0; guard < 14; guard++) {
+    g.font = serifCard(fs);
+    lines = wrapText(GREET.lines[idx], maxW);
+    if (lines.length * fs * 1.34 <= availH) break;
+    fs *= 0.94;
+  }
+  const lh = fs * 1.34, ty0 = Y + ch * 0.652 + lh * 0.5;
+  g.fillStyle = GOLD_PALE;
+  g.shadowColor = "rgba(255,150,60,0.45)"; g.shadowBlur = 10 * uu;
+  lines.forEach((ln, i) => g.fillText(ln, X + cw / 2, ty0 + i * lh));
+  g.shadowBlur = 0;
+  // декоративная линия и таймер реплики
+  const by2 = Y + ch - 18 * uu, bw2 = cw * 0.62;
+  g.strokeStyle = goldA(0.28); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(X + (cw - bw2) / 2, by2); g.lineTo(X + (cw + bw2) / 2, by2); g.stroke();
+  if (t < GREET.total) {
+    const c0 = GREET.cues[idx][0], c1 = GREET.cues[idx][1];
+    const w2 = bw2 * clamp((t - c0) / Math.max(0.4, c1 - c0), 0, 1);
+    g.strokeStyle = goldA(0.75); g.lineWidth = 1.6;
+    g.beginPath(); g.moveTo(X + (cw - bw2) / 2, by2); g.lineTo(X + (cw - bw2) / 2 + w2, by2); g.stroke();
+  }
+  g.restore();
+}
+
+function overlays(st) {  const uu = Math.max(Math.min(W / 1920, Hh / 1080), 0.42);
   const serif = (w, px) => `${w} ${Math.round(px * uu)}px "Cormorant Garamond", Georgia, serif`;
   if (st.strikesDone != null) {
     const gap = 46 * uu, y = Hh - 70 * uu, x0 = W / 2 - gap * 5.5, rr = 9 * uu;
@@ -970,6 +1221,7 @@ function render() {
   vignette();
   snow(st);
   confetti(st);
+  greetingCard(st);
   overlays(st);
 }
 
@@ -1094,6 +1346,9 @@ const AUD = {
     fetch(ASSET + "anthem.mp4").then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
       .then(ab => this.decode(ab)).then(b => { this.anthemBuiltin = b; if (!this.melody) $("melStatus").textContent = "Встроенный гимн · " + fmtDur(b.duration); })
       .catch(() => { this.anthemFailed = true; if (!this.melody) $("melStatus").textContent = "Встроенный гимн не загрузился"; });
+    // Голос поздравления (Дед Мороз и Снегурочка) — маленький wav, грузится сразу.
+    fetch(ASSET + GREET.src).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+      .then(ab => this.decode(ab)).then(b => { this.greetBuf = b; }).catch(() => {});
     // Запись боя качается в фоне: сцена уже идёт, до полуночи звук успеет загрузиться.
     this.loading = true;
     fetch(ASSET + "kuranty.mp4")
@@ -1154,6 +1409,12 @@ const AUD = {
     const pre = this.pre;
     if (pre) once("pre", pre, midnight - a - preLead - pre.duration, this.preGain);
     once("rec", this.rec, midnight - a);
+    // поздравление: голос стартует от фактического момента, субтитры идут за ним
+    if (this.greetBuf && this.greetAt == null && t > midnight - GREET.lead && t < midnight - 25) {
+      this.greetAt = t;
+      this.play(this.greetBuf, 0);
+    }
+    if (this.greetAt != null && t > midnight + 5) this.greetAt = null;
     once("mel", this.anthem, midnight + last + melodyPause);
     once("sal", this.salute, midnight + last + 1.5);
     const hourStart = Math.floor(t / 3600) * 3600;
