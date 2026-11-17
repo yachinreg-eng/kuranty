@@ -392,6 +392,11 @@ function frameState(t) {
   // наезд «в точку»: циферблат плавно приходит в центр без бокового рывка
   const f = (1 - 1 / zoom) / (1 - 1 / MAXZ);
   const view = { x: mix(VIEW_IDLE.x, VIEW_DIAL.x, f), y: mix(VIEW_IDLE.y, VIEW_DIAL.y, f), h: VIEW_IDLE.h / zoom };
+  // Медленный дрейф камеры в ожидании: к наезду на циферблат он затухает до нуля,
+  // чтобы кадр в полночь остался точно выровненным по фото.
+  const breathe = 1 - k;
+  view.x += (Math.sin(msk / 97) * 16 + Math.sin(msk / 31) * 5) * breathe;
+  view.y += Math.cos(msk / 113) * 9 * breathe;
   const hour = Math.floor(sod / 3600), since = sod % 3600;
   const n = hour % 12 === 0 ? 12 : hour % 12;
   let li = -1;
@@ -407,8 +412,11 @@ function frameState(t) {
   const gT = dt - (last + melodyPause), gLen = Math.max(30, anthemLen());
   const greetA = (isNY || demo) && gT > 0 ? smooth(gT / 2) * (1 - smooth((gT - gLen + 4) / 4)) : 0;
   const nowY = new Date(msk * 1000).getUTCFullYear();
+  // конфетти — короткий залп через пару секунд после того, как отзвучал гимн
+  const anthemEnd = last + melodyPause + gLen;
+  const confT = dt > anthemEnd && dt < anthemEnd + 4.5 ? dt - anthemEnd : null;
   return {
-    msk, sod, dt, k, zoom, view, pulse, strikesDone,
+    msk, sod, dt, k, zoom, view, pulse, strikesDone, hourIdx: hour % 12, confT,
     fwT: dt > last + melodyPause && dt < 900 ? dt - last - melodyPause : null,
     greetA, year, toNY: Date.UTC(nowY + 1, 0, 1) / 1000 - msk, anim: msk % 345600,
     minuteA: (sod % 3600) / 3600 * TAU, hourA: (sod % 43200) / 43200 * TAU
@@ -458,19 +466,32 @@ function dialFace(d, st) {
   gr.addColorStop(1, rgba(fr * 0.8, fg * 0.8, fb * 0.8));
   g.fillStyle = gr; g.fillRect(-1.1, -1.1, 2.2, 2.2);
   // минутная дорожка у края
-  g.fillStyle = GOLD;
+  const lg = d.light;
+  // мягкая пульсация подсветки текущего часа
+  const lit = 0.5 + 0.5 * Math.sin(st.anim * 0.7);
   for (let m = 0; m < 60; m++) {
     const a = m / 60 * TAU, r = 0.955, big = m % 5 === 0;
-    g.beginPath(); g.arc(Math.sin(a) * r, -Math.cos(a) * r, big ? 0.016 : 0.009, 0, TAU); g.fill();
+    const cur = big && m / 5 % 12 === st.hourIdx;
+    g.fillStyle = cur ? rgba(255, 236, 176, 0.55 + 0.45 * lit) : GOLD;
+    g.beginPath(); g.arc(Math.sin(a) * r, -Math.cos(a) * r, cur ? 0.027 : big ? 0.016 : 0.009, 0, TAU); g.fill();
   }
   // римские цифры, основанием к центру
   g.font = '500 100px "Cormorant Garamond", Georgia, serif';
   g.textAlign = "center"; g.textBaseline = "middle";
-  const lg = d.light;
-  g.fillStyle = rgba(214 * lg + 30, 186 * lg + 26, 92 * lg + 10);
+  const base = rgba(214 * lg + 30, 186 * lg + 26, 92 * lg + 10);
   NUMERALS.forEach((s, k) => {
+    const cur = k === st.hourIdx;
     g.save();
-    g.rotate(k / 12 * TAU); g.translate(0, -0.81); g.scale(0.0023, 0.0029);
+    g.rotate(k / 12 * TAU); g.translate(0, -0.81);
+    if (cur) {   // тёплый ореол за цифрой текущего часа
+      const gl = g.createRadialGradient(0, 0, 0, 0, 0, 0.145);
+      gl.addColorStop(0, goldA(0.11 + 0.1 * lit));
+      gl.addColorStop(0.55, goldA(0.035 + 0.045 * lit));
+      gl.addColorStop(1, goldA(0));
+      g.fillStyle = gl; g.beginPath(); g.arc(0, 0, 0.145, 0, TAU); g.fill();
+    }
+    g.scale(0.0023, 0.0029);
+    g.fillStyle = cur ? rgba(255, 244, 206) : base;
     g.fillText(s, 0, 6);
     g.restore();
   });
@@ -565,6 +586,7 @@ function drawSkyLayer(st) {
     c.fillStyle = rgba(225, 232, 255, a);
     c.beginPath(); c.arc(H(i, 1) * W, yy * Hh, 0.6 + H(i, 5) * 1.3, 0, TAU); c.fill();
   }
+  drawPlanes(st);
   if (st.fwT != null) {
     const f = skyFlash(st.fwT);
     if (f) { c.fillStyle = rgba(f.r, f.g, f.b, Math.min(0.14, f.i * 0.5)); c.fillRect(0, 0, W, Hh); }
@@ -573,6 +595,10 @@ function drawSkyLayer(st) {
     c.transform(M.s, 0, 0, M.s, M.x0, M.y0);
     fireworks(st.fwT);
   }
+  // луна: в мировых координатах, маска неба обрежет её силуэтом башни
+  viewTransform(c, st.view);
+  c.globalCompositeOperation = "source-over";
+  drawMoon(st);
   // оставить только небо
   c.globalCompositeOperation = "destination-in";
   viewTransform(c, st.view);
@@ -653,6 +679,144 @@ function fireworks(t) {
   }
 }
 
+/* ---------- живое небо: луна и самолёты ---------- */
+const MOON = { x: 900, y: 1040, r: 110 };
+const MOON_SPOTS = [[-0.30, -0.20, 0.24, 0.09], [0.18, 0.10, 0.30, 0.07], [0.02, -0.44, 0.15, 0.08], [-0.12, 0.40, 0.20, 0.05]];
+
+function drawMoon(st) {
+  // собственный очень медленный дрейф: луна «плывёт» относительно кадра
+  const mx = MOON.x + Math.sin(st.anim / 420) * 24;
+  const my = MOON.y + Math.cos(st.anim / 610) * 14;
+  const r = MOON.r;
+  g.save();
+  const halo = g.createRadialGradient(mx, my, r * 0.85, mx, my, r * 5);
+  halo.addColorStop(0, "rgba(214,224,255,0.20)");
+  halo.addColorStop(0.4, "rgba(196,210,255,0.07)");
+  halo.addColorStop(1, "rgba(196,210,255,0)");
+  g.fillStyle = halo; g.beginPath(); g.arc(mx, my, r * 5, 0, TAU); g.fill();
+  const disc = g.createRadialGradient(mx - r * 0.32, my - r * 0.36, r * 0.06, mx, my, r);
+  disc.addColorStop(0, "rgb(255,253,240)");
+  disc.addColorStop(0.65, "rgb(243,238,214)");
+  disc.addColorStop(1, "rgb(206,198,172)");
+  g.fillStyle = disc; g.beginPath(); g.arc(mx, my, r, 0, TAU); g.fill();
+  g.save();
+  g.beginPath(); g.arc(mx, my, r * 0.98, 0, TAU); g.clip();
+  for (const [dx, dy, cr, a] of MOON_SPOTS) {
+    const px = mx + dx * r, py = my + dy * r, pr = cr * r;
+    const cg = g.createRadialGradient(px, py, 0, px, py, pr);
+    cg.addColorStop(0, "rgba(120,112,92," + a + ")"); cg.addColorStop(1, "rgba(120,112,92,0)");
+    g.fillStyle = cg; g.beginPath(); g.arc(px, py, pr, 0, TAU); g.fill();
+  }
+  g.restore();
+  g.restore();
+}
+
+const PLANE = { period: 149, dur: 27 };
+function drawPlanes(st) {
+  const t = st.anim;
+  const slot = Math.floor(t / PLANE.period);
+  const u = (t - slot * PLANE.period) / PLANE.dur;
+  if (u >= 1) return;
+  const u2 = Math.max(0.6, Hh / 1080);
+  const dir = slot % 2 ? -1 : 1;
+  const x = mix(-0.08 * W, 1.08 * W, dir > 0 ? u : 1 - u);
+  const y = (0.1 + H(slot, 21) * 0.2) * Hh + Math.sin(t * 0.22) * 3 * u2;
+  const blink = Math.sin(t * 5.4) > 0.2;
+  // дымный след: еле заметная полоса, тянущаяся за бортом
+  const tl = 170 * u2;
+  const tg = g.createLinearGradient(x - dir * tl, y, x, y);
+  tg.addColorStop(0, "rgba(198,210,245,0)");
+  tg.addColorStop(0.7, "rgba(198,210,245,0.045)");
+  tg.addColorStop(1, "rgba(224,232,255,0.1)");
+  g.strokeStyle = tg; g.lineWidth = 1.7 * u2; g.lineCap = "round";
+  g.beginPath(); g.moveTo(x - dir * tl, y + 1.1 * u2); g.lineTo(x, y); g.stroke();
+  // сам корпус: короткий штрих по курсу
+  g.strokeStyle = "rgba(198,206,226,0.16)"; g.lineWidth = 1.5 * u2;
+  g.beginPath(); g.moveTo(x - dir * 5 * u2, y + 0.6 * u2); g.lineTo(x + dir * 5 * u2, y - 0.6 * u2); g.stroke();
+  const gr = g.createRadialGradient(x, y, 0, x, y, 9 * u2);
+  gr.addColorStop(0, rgba(255, 252, 235, 0.95 * (blink ? 1 : 0.12)));
+  gr.addColorStop(0.3, rgba(255, 246, 214, 0.34 * (blink ? 1 : 0.12)));
+  gr.addColorStop(1, rgba(255, 246, 214, 0));
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, 9 * u2, 0, TAU); g.fill();
+  if (blink) {   // проблесковый огонь: короткие лучи
+    g.strokeStyle = "rgba(255,250,232,0.5)"; g.lineWidth = 0.9 * u2;
+    g.beginPath();
+    g.moveTo(x - 7 * u2, y); g.lineTo(x + 7 * u2, y);
+    g.moveTo(x, y - 7 * u2); g.lineTo(x, y + 7 * u2);
+    g.stroke();
+  } else {
+    g.fillStyle = "rgba(255,255,245,0.26)";
+    g.beginPath(); g.arc(x, y, 1.2 * u2, 0, TAU); g.fill();
+  }
+  // красный маячок на крыле мигает в противофазе
+  g.fillStyle = rgba(255, 72, 48, blink ? 0.16 : 0.85);
+  g.beginPath(); g.arc(x - dir * 9 * u2, y + 2 * u2, 1.3 * u2, 0, TAU); g.fill();
+}
+
+/* ---------- воздух, свет и конфетти (экран) ---------- */
+let vigGrad = null, vigKey = "";
+function vignette() {
+  const key = W + "x" + Hh;
+  if (!vigGrad || vigKey !== key) {
+    const cx = W * 0.5, cy = Hh * 0.52;
+    const gr = g.createRadialGradient(cx, cy, Math.min(W, Hh) * 0.42, cx, cy, Math.hypot(W, Hh) * 0.64);
+    gr.addColorStop(0, "rgba(0,0,0,0)");
+    gr.addColorStop(0.6, "rgba(0,0,0,0.13)");
+    gr.addColorStop(1, "rgba(0,0,0,0.5)");
+    vigGrad = gr; vigKey = key;
+  }
+  g.fillStyle = vigGrad; g.fillRect(0, 0, W, Hh);
+}
+
+// отблеск залпов на брусчатке и снегу: тёплым светом снизу кадра
+function groundGlow(st) {
+  if (st.fwT == null) return;
+  const f = skyFlash(st.fwT);
+  if (!f) return;
+  const a = Math.min(0.4, f.i * 1.5);
+  if (a < 0.005) return;
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  const top = Hh * 0.55;
+  const gr = g.createLinearGradient(0, Hh, 0, top);
+  gr.addColorStop(0, rgba(f.r, f.g, f.b, a * 0.6));
+  gr.addColorStop(0.5, rgba(f.r, f.g, f.b, a * 0.18));
+  gr.addColorStop(1, rgba(f.r, f.g, f.b, 0));
+  g.fillStyle = gr; g.fillRect(0, top, W, Hh - top);
+  const gr2 = g.createLinearGradient(0, Hh, 0, Hh - 110);
+  gr2.addColorStop(0, rgba(f.r, f.g, f.b, a * 0.4));
+  gr2.addColorStop(1, rgba(f.r, f.g, f.b, 0));
+  g.fillStyle = gr2; g.fillRect(0, Hh - 110, W, 110);
+  g.restore();
+}
+
+const CONF_PAL = [[255, 214, 120], [255, 92, 76], [120, 230, 150], [130, 170, 255], [255, 255, 240], [232, 150, 255]];
+const CONF_COUNT = 140;
+function confetti(st) {
+  if (st.confT == null || st.confT > 3.6) return;
+  const t = st.confT;
+  const u = Math.max(0.6, Hh / 1080);
+  for (let i = 0; i < CONF_COUNT; i++) {
+    const age = t - H(i, 31) * 1.1;
+    if (age < 0) continue;
+    const life = 2.2 + H(i, 32) * 1.4;
+    if (age > life) continue;
+    const pal = CONF_PAL[Math.floor(H(i, 33) * CONF_PAL.length) % CONF_PAL.length];
+    const x = H(i, 34) * W + Math.sin(age * (1.6 + H(i, 35) * 2.2) + i) * 26 * u + age * (H(i, 36) - 0.5) * 60 * u;
+    const y = -30 * u + age * (220 + H(i, 37) * 260) * u + 130 * u * age * age;
+    const rot = age * (2.4 + H(i, 38) * 6) * (H(i, 39) > 0.5 ? 1 : -1);
+    const w = (5 + H(i, 40) * 6) * u, h = (9 + H(i, 41) * 14) * u;
+    // «переворот» бумажки: ширина дышит, будто она кувыркается в воздухе
+    const flip = 0.28 + 0.72 * Math.abs(Math.cos(age * (2.2 + H(i, 42) * 3.4) + i * 0.7));
+    g.save();
+    g.translate(x, y); g.rotate(rot);
+    g.globalAlpha = Math.min(1, (life - age) / 0.6) * 0.95;
+    g.fillStyle = rgba(pal[0], pal[1], pal[2]);
+    g.fillRect(-w * flip / 2, -h / 2, w * flip, h);
+    g.restore();
+  }
+}
+
 /* ---------- снег и надписи (экран) ---------- */
 function snow(st) {
   const u = Math.max(0.6, Hh / 1080);
@@ -673,6 +837,34 @@ function countdown(s) {
   const x = p(Math.floor(t / 3600) % 24) + ":" + p(Math.floor(t / 60) % 60) + ":" + p(t % 60);
   return d > 0 ? d + " дн " + x : x;
 }
+// компактный виджет радио: название станции и живые полоски эквалайзера
+function radioWidget(st, hudA, uu) {
+  if (!started || !RADIO.on || hudA < 0.02) return;
+  const right = W - 56 * uu, baseY = Hh - 84 * uu;
+  const name = RADIO.label();
+  const playing = RADIO.playing && !RADIO.muted;
+  g.save();
+  g.globalAlpha = hudA * 0.88;
+  g.textAlign = "right"; g.textBaseline = "middle";
+  g.shadowColor = "rgba(0,0,0,0.95)"; g.shadowBlur = 8 * uu;
+  g.font = `500 ${Math.round(25 * uu)}px Inter, system-ui, sans-serif`;
+  g.fillStyle = RADIO.muted ? "rgba(206,200,186,0.8)" : GOLD_PALE;
+  g.fillText(name, right, baseY);
+  const tw = g.measureText(name).width;
+  const n = 6, bw = 3.6 * uu, gap = 4 * uu, hmax = 27 * uu;
+  const endX = right - tw - 14 * uu;
+  g.shadowBlur = 0;
+  for (let i = 0; i < n; i++) {
+    const ph = st.anim * (1.6 + i * 0.37) + i * 1.7;
+    const amp = playing
+      ? 0.22 + 0.78 * Math.abs(Math.sin(ph)) * (0.6 + 0.4 * Math.abs(Math.sin(ph * 0.37 + i)))
+      : 0.14;
+    const hh = Math.max(3 * uu, hmax * amp);
+    g.fillStyle = playing ? GOLD_PALE : goldA(0.35);
+    g.fillRect(endX - (n - 1 - i) * (bw + gap) - bw, baseY - hh / 2, bw, hh);
+  }
+  g.restore();
+}
 function overlays(st) {
   const uu = Math.max(Math.min(W / 1920, Hh / 1080), 0.42);
   const serif = (w, px) => `${w} ${Math.round(px * uu)}px "Cormorant Garamond", Georgia, serif`;
@@ -691,6 +883,31 @@ function overlays(st) {
       } else {
         g.strokeStyle = goldA(0.55); g.lineWidth = 1.5; g.beginPath(); g.arc(x, y, rr, 0, TAU); g.stroke();
       }
+    }
+  }
+  // крупная цифра удара рядом с циферблатом: вспыхивает на каждом ударе и гаснет
+  if (st.strikesDone > 0) {
+    const a = Math.min(1, st.pulse * 2.4);
+    if (a > 0.02) {
+      const sDial = Hh / VIEW_DIAL.h;
+      const nx = W / 2 + DIALS[0].rx * sDial * 1.78, ny = Hh / 2, nr = 0.23 * Hh;
+      g.save();
+      g.globalAlpha = a;
+      // тёмное «пятно» под цифрой: иначе золото теряется на белой кладке башни
+      const bg = g.createRadialGradient(nx, ny, 0, nx, ny, nr);
+      bg.addColorStop(0, "rgba(8,6,10,0.62)");
+      bg.addColorStop(0.55, "rgba(8,6,10,0.34)");
+      bg.addColorStop(1, "rgba(8,6,10,0)");
+      g.fillStyle = bg; g.beginPath(); g.arc(nx, ny, nr, 0, TAU); g.fill();
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.font = serif(500, 0.32 * Hh);
+      g.shadowColor = "rgba(255,150,60,0.8)"; g.shadowBlur = 26 * uu;
+      g.fillStyle = GOLD_PALE;
+      g.fillText(String(st.strikesDone), nx, ny);
+      g.shadowBlur = 0;
+      g.strokeStyle = "rgba(52,26,8,0.7)"; g.lineWidth = 2.4 * uu;
+      g.strokeText(String(st.strikesDone), nx, ny);
+      g.restore();
     }
   }
   if (st.greetA > 0.001) {
@@ -731,6 +948,7 @@ function overlays(st) {
     g.shadowColor = "rgba(0,0,0,0.9)"; g.shadowBlur = 6;
     g.font = serif(700, 26); g.fillText("ДЕМО", 56 * uu, 60 * uu); g.restore();
   }
+  radioWidget(st, hudA, uu);
 }
 
 /* ---------- кадр ---------- */
@@ -758,7 +976,10 @@ function render() {
   drawDials(st);
   drawLights(st);
   screenTransform(g);
+  groundGlow(st);
+  vignette();
   snow(st);
+  confetti(st);
   overlays(st);
 }
 
@@ -973,6 +1194,15 @@ const RADIO = {
   resume: store.get("radioResume", true),
   playing: false, muted: false, okAt: 0, fadeTimer: 0, retryTimer: 0,
   covering() { return this.on && this.okAt > 0 && Date.now() - this.okAt < 60000; },
+  // короткое имя станции для виджета на сцене
+  label() {
+    const sel = $("radioSel");
+    if (sel) {
+      const opt = Array.prototype.find.call(sel.options, o => o.value === this.url);
+      if (opt) return opt.textContent.trim();
+    }
+    try { return new URL(this.url).hostname.replace(/^www\./, ""); } catch (e) { return "Своя станция"; }
+  },
   status(text, off) { const el = $("radioStatus"); el.textContent = text; el.classList.toggle("off", !!off); },
   window(t) {  // [начало затихания, момент возврата] вокруг ближайшей полуночи (виртуальное время)
     const sod = (((t + MSK_OFF) % 86400) + 86400) % 86400;
