@@ -1,0 +1,1470 @@
+<meta charset="utf-8">
+<title>Кремлёвские куранты</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: full-bleed night photo of the Spasskaya Tower on canvas with live dials, snow and fireworks; one centered start card; a slide-in settings panel. Single dark look by design. */
+:root {
+  --night: #07070c;
+  --panel: rgba(10, 11, 20, 0.9);
+  --line: rgba(232, 193, 106, 0.22);
+  --ink: #f2e9d6;
+  --muted: #a9a08e;
+  --gold: #e8c16a;
+  --display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--night);
+  color: var(--ink);
+  font-family: var(--ui);
+  overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: var(--night); }
+
+.start {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+  background: radial-gradient(ellipse at center, rgba(7,7,12,0.45), rgba(7,7,12,0.82));
+  z-index: 5;
+}
+.card {
+  max-width: 34rem; width: 100%; box-sizing: border-box;
+  display: grid; gap: 14px;
+  padding: 28px 28px 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  max-height: calc(100% - 16px); overflow-y: auto;
+}
+.eyebrow { margin: 0; font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+h1 { margin: 0; font-family: var(--display); font-weight: 600; font-size: clamp(2rem, 6vw, 3rem); line-height: 1.02; text-wrap: balance; }
+.card p { margin: 0; line-height: 1.5; }
+.card .small { font-size: 0.85rem; color: var(--muted); }
+.steps { margin: 0; padding-left: 1.2rem; display: grid; gap: 6px; font-size: 0.9rem; line-height: 1.45; color: var(--muted); }
+.steps b { color: var(--ink); font-weight: 500; }
+.credits { font-size: 0.75rem; line-height: 1.45; color: var(--muted); }
+.credits a { color: var(--muted); }
+
+button, .file {
+  font: 500 0.95rem/1 var(--ui);
+  color: var(--ink);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 11px 14px;
+  cursor: pointer;
+}
+button:hover, .file:hover { border-color: var(--gold); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, .file:focus-within { outline: 2px solid var(--gold); outline-offset: 2px; }
+.primary { background: var(--gold); color: #1b1206; border-color: var(--gold); font-weight: 600; font-size: 1.05rem; padding: 15px 18px; }
+.primary:hover { background: #f2d084; }
+.primary:disabled { opacity: 0.6; cursor: progress; }
+
+.gear {
+  position: fixed; z-index: 4;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  right: calc(14px + env(safe-area-inset-right, 0px));
+  width: 48px; height: 48px; padding: 0; display: grid; place-items: center;
+  background: rgba(10,11,20,0.55); border-radius: 50%;
+  transition: opacity 0.6s;
+}
+.gear.idle { opacity: 0; pointer-events: none; }
+.gear svg { width: 24px; height: 24px; fill: none; stroke: var(--gold); stroke-width: 1.6; }
+
+.panel {
+  position: fixed; z-index: 6; top: 0; right: 0; bottom: 0;
+  width: min(25rem, 100%); box-sizing: border-box;
+  overflow-y: auto;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  padding: calc(18px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) 18px;
+  display: grid; gap: 18px; align-content: start;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.panel header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.panel h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 1.7rem; }
+.panel section { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+.panel h3 { margin: 0; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+.clock { font: 600 2rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.clock small { font: 400 0.8rem var(--ui); color: var(--muted); margin-left: 6px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row > * { flex: 1 1 auto; min-width: 0; }
+.value { font-variant-numeric: tabular-nums; }
+.hint { margin: 0; font-size: 0.82rem; line-height: 1.45; color: var(--muted); }
+label.field { display: grid; gap: 6px; font-size: 0.85rem; color: var(--muted); }
+input[type="number"], input[type="url"], textarea, select {
+  font: 400 0.95rem var(--ui); color: var(--ink);
+  background: rgba(255,255,255,0.05); border: 1px solid var(--line); border-radius: 4px;
+  padding: 9px 10px; width: 100%; box-sizing: border-box;
+}
+textarea { min-height: 3.2rem; resize: vertical; font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--gold); }
+.file { display: inline-flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.status { font-size: 0.82rem; color: var(--ink); min-height: 1.1em; overflow-wrap: anywhere; }
+.status.off { color: var(--muted); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.two > * { min-width: 0; }
+label.check { display: flex; gap: 10px; align-items: center; font-size: 0.9rem; cursor: pointer; }
+label.check input { width: 18px; height: 18px; accent-color: var(--gold); margin: 0; }
+kbd { font: 500 0.78rem var(--ui); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .gear { transition: none; } }
+</style>
+
+<canvas id="scene" aria-label="Спасская башня Московского Кремля ночью, куранты показывают московское время"></canvas>
+
+<div class="start" id="start">
+  <div class="card">
+    <p class="eyebrow">Москва · Спасская башня · UTC+3</p>
+    <h1>Кремлёвские куранты</h1>
+    <p>Часы идут по московскому времени. В 23:59 звучит новогодняя мелодия и камера приближается к циферблату, в полночь звучат перезвон и 12 настоящих ударов, затем гимн, поздравление и салют.</p>
+    <ol class="steps">
+      <li>Поверните телефон <b>горизонтально</b> и выключите <b>беззвучный режим</b>.</li>
+      <li>Пункт управления → <b>Повтор экрана</b> → ваша Apple TV.</li>
+      <li>Нажмите «Начать». Мелодии и время настраиваются в настройках (значок шестерёнки).</li>
+    </ol>
+    <button class="primary" id="go" type="button">Начать</button>
+    <p class="small">Чтобы увидеть полночь сразу, откройте настройки и нажмите «Показать полночь сейчас».</p>
+    <p class="credits">Фото: «<a href="https://commons.wikimedia.org/wiki/File:%D0%A1%D0%BF%D0%B0%D1%81%D1%81%D0%BA%D0%B0%D1%8F_%D0%B1%D0%B0%D1%88%D0%BD%D1%8F_%D0%94%D0%B5%D0%BA%D0%B0%D0%B1%D1%80%D1%8C_2015%D0%B3.jpg" target="_blank" rel="noopener">Спасская башня Декабрь 2015г.</a>», автор WM wm WM, CC BY-SA 4.0. Бой курантов и гимн: <a href="https://commons.wikimedia.org/wiki/File:%D0%9D%D0%BE%D0%B2%D0%BE%D0%B3%D0%BE%D0%B4%D0%BD%D0%B5%D0%B5_%D0%BE%D0%B1%D1%80%D0%B0%D1%89%D0%B5%D0%BD%D0%B8%D0%B5_%D0%94%D0%BC%D0%B8%D1%82%D1%80%D0%B8%D1%8F_%D0%9C%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D0%B5%D0%B2%D0%B0_31_%D0%B4%D0%B5%D0%BA%D0%B0%D0%B1%D1%80%D1%8F_2011._Kremlin.ru.webm" target="_blank" rel="noopener">Kremlin.ru, 31.12.2011</a>, CC BY 4.0. Циферблаты, стрелки, снег и салют дорисованы.</p>
+  </div>
+</div>
+
+<button class="gear idle" id="gear" type="button" aria-label="Настройки" hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"></path><circle cx="12" cy="12" r="6.4"></circle></svg>
+</button>
+
+<aside class="panel" id="panel" hidden aria-label="Настройки курантов">
+  <header>
+    <h2>Настройки</h2>
+    <button type="button" id="close">Закрыть</button>
+  </header>
+
+  <section>
+    <h3>Московское время</h3>
+    <div class="clock"><span id="mskNow">--:--:--</span><small>МСК</small></div>
+    <p class="hint">Коррекция: <span class="value" id="corrVal">+0,0 с</span>. Сверьте с эфиром Первого канала; при повторе экрана картинка может отставать, сдвиньте на это время.</p>
+    <div class="row">
+      <button type="button" data-nudge="-1">−1 с</button>
+      <button type="button" data-nudge="-0.1">−0,1 с</button>
+      <button type="button" data-nudge="0.1">+0,1 с</button>
+      <button type="button" data-nudge="1">+1 с</button>
+    </div>
+    <div class="row"><button type="button" id="corrReset">Сбросить коррекцию</button></div>
+    <p class="hint">С клавиатуры: <kbd>↑</kbd><kbd>↓</kbd> ±1 с, <kbd>←</kbd><kbd>→</kbd> ±0,1 с, <kbd>Пробел</kbd> демо, <kbd>S</kbd> настройки.</p>
+  </section>
+
+  <section>
+    <h3>Демо</h3>
+    <button type="button" id="demo">Показать полночь сейчас</button>
+    <p class="hint">Время перематывается на 23:58:45: приближение камеры, перезвон, 12 ударов, мелодия, салют.</p>
+  </section>
+
+  <section>
+    <h3>Интернет-радио</h3>
+    <p class="hint">Играет весь вечер и само затихает перед перезвоном: радиостанции передают куранты с задержкой, и без этого бой звучал бы дважды. Работает в версии на GitHub Pages; по ссылке claude.ai потоки заблокированы.</p>
+    <label class="field">Станция
+      <select id="radioSel">
+        <optgroup label="Новогодние">
+          <option value="https://radiorecord.hostingradio.ru/christmas96.aacp">Радио Рекорд — Christmas</option>
+          <option value="https://xmas-node1.zip.wf/live.aac">Christmas FM Non-stop</option>
+          <option value="https://christmasfm.cdnstream1.com/2550_128.mp3">Classical Christmas FM</option>
+          <option value="https://listen.181fm.com/181-xsmooth_128k.mp3">181.FM — Christmas Smooth Jazz</option>
+        </optgroup>
+        <optgroup label="Популярные">
+          <option value="https://europaplus.hostingradio.ru:8014/europaplus320.mp3">Европа Плюс</option>
+          <option value="https://gpm.hostingradio.ru/gpm-avtoradio495.aacp">Авторадио</option>
+          <option value="https://gpm.hostingradio.ru/gpm-energyfm495.aacp">Радио Energy</option>
+          <option value="https://rusradio.hostingradio.ru/rusradio96.aacp">Русское радио</option>
+          <option value="https://retro.hostingradio.ru:8014/retro320.mp3">Ретро FM</option>
+          <option value="https://retro80.hostingradio.ru:8025/retro80-128.mp3">Ретро FM — 80-е</option>
+          <option value="https://hitfm.hostingradio.ru/hitfm128.mp3">Хит FM</option>
+          <option value="https://dfm.hostingradio.ru/dfm96.aacp">DFM</option>
+          <option value="https://radiorecord.hostingradio.ru/rr_main96.aacp">Радио Рекорд</option>
+          <option value="https://dorognoe.hostingradio.ru/dorognoe_acc">Дорожное радио</option>
+          <option value="https://nashe1.hostingradio.ru:80/nashe-128.mp3">Наше радио</option>
+          <option value="https://chanson.hostingradio.ru:8041/chanson256.mp3">Радио Шансон</option>
+          <option value="https://gpm.hostingradio.ru/gpm-humorfm495.aacp">Юмор FM</option>
+          <option value="https://gpm.hostingradio.ru/gpm-relaxfm495.aacp">Relax FM</option>
+          <option value="https://icecast-vgtrk.cdnvideo.ru/mayakfm">Радио Маяк</option>
+        </optgroup>
+        <option value="custom">Свой адрес потока…</option>
+      </select>
+    </label>
+    <label class="field" id="radioUrlField" hidden>Адрес потока (https, mp3 или aac)<input type="url" id="radioUrl" placeholder="https://…" inputmode="url" autocomplete="off"></label>
+    <button type="button" id="radioToggle">Включить радио</button>
+    <div class="status off" id="radioStatus">Выключено</div>
+    <div class="two">
+      <label class="field">Затихнуть до перезвона за, с<input type="number" id="radioLead" step="1" min="0" value="3"></label>
+      <label class="field">Громкость радио<input type="range" id="radioVol" min="0" max="1" step="0.01" value="0.8"></label>
+    </div>
+    <label class="check"><input type="checkbox" id="radioResume"> Включить снова после гимна</label>
+    <p class="hint" id="radioWhen"></p>
+  </section>
+
+  <section>
+    <h3>Мелодия до курантов</h3>
+    <p class="hint">Запасной вариант, если радио выключено или не играет. Звучит перед перезвоном и заканчивается за несколько секунд до него. Встроенная: «В лесу родилась ёлочка» (Л. Бекман), аранжировка синтезирована.</p>
+    <label class="check"><input type="checkbox" id="preOn"> Играть мелодию перед курантами</label>
+    <div class="status" id="preStatus">Встроенная: «В лесу родилась ёлочка»</div>
+    <label class="file">Своя мелодия<input type="file" id="preFile" accept="audio/*"></label>
+    <div class="two">
+      <label class="field">Закончить до перезвона за, с<input type="number" id="preLead" step="0.5" min="0" value="1.5"></label>
+      <label class="field">Громкость мелодии<input type="range" id="preVol" min="0" max="1" step="0.01" value="0.8"></label>
+    </div>
+    <p class="hint" id="preWhen"></p>
+    <div class="row">
+      <button type="button" id="prePreview">Прослушать</button>
+      <button type="button" id="preBuiltin">Вернуть встроенную</button>
+    </div>
+  </section>
+
+  <section>
+    <h3>Гимн после боя</h3>
+    <p class="hint">Вступает вместе с надписью «С Новым годом!». Встроенный: запись гимна сразу после курантов (Kremlin.ru, 2011). Можно заменить своим файлом.</p>
+    <div class="status" id="melStatus">Встроенный гимн</div>
+    <label class="file">Свой файл гимна<input type="file" id="melFile" accept="audio/*"></label>
+    <label class="field">Пауза после 12-го удара, с<input type="number" id="melPause" step="0.1" min="0" value="2.7"></label>
+    <div class="row">
+      <button type="button" id="melPreview">Прослушать</button>
+      <button type="button" id="melClear">Вернуть встроенный</button>
+    </div>
+  </section>
+
+  <section>
+    <h3>Запись боя</h3>
+    <div class="status" id="recStatus">Встроенная: перезвон и 12 ударов (Kremlin.ru)</div>
+    <button type="button" id="preview">Прослушать с первого удара</button>
+    <p class="hint">Можно заменить своей записью: укажите, на какой секунде в ней первый удар (и, по желанию, все 12).</p>
+    <label class="file">Своя запись боя<input type="file" id="recFile" accept="audio/*"></label>
+    <div class="two">
+      <label class="field">Первый удар, с<input type="number" id="first" step="0.01" min="0" value="21.52"></label>
+      <label class="field">Интервал ударов, с<input type="number" id="interval" step="0.01" min="1" value="3.5"></label>
+    </div>
+    <label class="field">Секунды всех 12 ударов<textarea id="strikes"></textarea></label>
+    <button type="button" id="recBuiltin">Вернуть встроенную запись</button>
+  </section>
+
+  <section>
+    <h3>Салют</h3>
+    <label class="file">Звук салюта (необязательно)<input type="file" id="salFile" accept="audio/*"></label>
+    <div class="status off" id="salStatus">Не выбран</div>
+  </section>
+
+  <section>
+    <h3>Громкость</h3>
+    <input type="range" id="vol" min="0" max="1" step="0.01" value="0.9" aria-label="Громкость">
+    <button type="button" id="testBell">Проверить звук: один удар</button>
+  </section>
+
+  <section>
+    <h3>Источники</h3>
+    <p class="hint">Фото: WM wm WM, «Спасская башня Декабрь 2015г.», CC BY-SA 4.0, Wikimedia Commons. Бой курантов и гимн: Kremlin.ru, новогоднее обращение 31.12.2011, CC BY 4.0, Wikimedia Commons. «В лесу родилась ёлочка»: музыка Л. Бекмана (1905), общественное достояние; аранжировка синтезируется в браузере. Циферблаты, стрелки, снег и салют дорисованы поверх фото.</p>
+  </section>
+</aside>
+
+<script>
+"use strict";
+/* ============================ ассеты ============================ */
+const ASSET = "assets/web/";
+const PHOTO = { w: 3513, h: 5593 };                         // координаты мира = пиксели исходного фото
+const CLOCK_TILE = [1380, 1560, 2520, 2700];                 // чёткий фрагмент с часами
+const BG = { w: 2400, h: 900, photoLeft: 917, photoW: 565 };  // размытые поля по бокам
+const BG_SCALE = PHOTO.h / BG.h;
+// Тёмное поле циферблатов на фото: эллипс по внутренней кромке обода (центр, полуоси, наклон)
+// и разворот phi внутри эллипса, при котором цифры совпадают с цифрами на фото.
+const DIALS = [
+  { key: "R", cx: 2023.9, cy: 2116.3, rx: 157.1, ry: 195.8, rot: -31.5, phi: 36.2, field: [43, 53, 46], tile: [1804, 1897, 2243, 2335], light: 1 },
+  { key: "L", cx: 1573.5, cy: 2184.2, rx: 78.7, ry: 200, rot: 9.8, phi: -10, field: [23, 23, 18], tile: [1349, 1960, 1797, 2408], light: 0.6 }
+];
+const STAR = { x: 1817, y: 301 };
+const BELFRY = { x: 1880, y: 1385 };
+// Метры → пиксели фото (башня 71 м от брусчатки до звезды)
+const M = { s: 66, x0: 1800, y0: 4895 };
+const VIEW_IDLE = { x: 1790, y: 2600, h: 4900 };
+const VIEW_DIAL = { x: 2026, y: 2114, h: 900 };
+const BUILTIN_META = {
+  firstStrike: 21.52, strikeInterval: 3.5,
+  strikes: [21.52, 25.3, 28.86, 32.43, 35.95, 39.39, 42.79, 46.22, 49.66, 53.13, 56.61, 60.02]
+};
+
+const IMG = {};
+function loadImg(key, file) {
+  return new Promise(res => {
+    const im = new Image();
+    im.decoding = "async";
+    im.onload = () => { IMG[key] = im; res(true); };
+    im.onerror = () => res(false);
+    im.src = ASSET + file;
+  });
+}
+let photoLayer = null;   // фото с растушёванными боковыми краями
+const assetsReady = Promise.all([
+  loadImg("photo", "photo.jpg"), loadImg("clock", "photo_clock.jpg"), loadImg("bg", "side_bg.jpg"),
+  loadImg("mask", "sky_mask.png"), loadImg("occlR", "occl_R.png"), loadImg("occlL", "occl_L.png")
+]).then(() => {
+  const p = IMG.photo;
+  if (!p) return;
+  const c = document.createElement("canvas");
+  c.width = p.naturalWidth; c.height = p.naturalHeight;
+  const x = c.getContext("2d");
+  x.drawImage(p, 0, 0);
+  x.globalCompositeOperation = "destination-in";
+  const f = c.width * 0.16;
+  const gr = x.createLinearGradient(0, 0, c.width, 0);
+  gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(f / c.width, "rgba(0,0,0,1)");
+  gr.addColorStop(1 - f / c.width, "rgba(0,0,0,1)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+  x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+  photoLayer = c;
+});
+
+/* ============================ время ============================ */
+const MSK_OFF = 3 * 3600, TAU = Math.PI * 2;
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("kuranty2." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("kuranty2." + k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem("kuranty2." + k); } catch (e) {} }
+};
+let correction = store.get("correction", 0);
+let demo = null;
+let meta = Object.assign({}, BUILTIN_META, store.get("customMeta", null) || {});
+let melodyPause = store.get("anthemPause", 2.7);   // гимн: секунд после 12-го удара
+let preOn = store.get("preOn", true);               // мелодия до курантов
+let preLead = store.get("preLead", 1.5);            // закончить за N с до перезвона
+let preVol = store.get("preVol", 0.8);
+const anthemLen = () => (AUD.anthem ? AUD.anthem.duration : 60);
+function offsetOf(i) {
+  if (meta.strikes && meta.strikes.length > i) return meta.strikes[i] - meta.strikes[0];
+  return i * meta.strikeInterval;
+}
+function alignment() { return meta.strikes && meta.strikes.length ? meta.strikes[0] : meta.firstStrike; }
+function nowVirt() {
+  const real = Date.now() / 1000;
+  return demo ? demo.virtual + (real - demo.real) : real + correction;
+}
+function hms(t, tenths) {
+  const s = (((t + MSK_OFF) % 86400) + 86400) % 86400;
+  const p = n => String(n).padStart(2, "0");
+  let out = p(Math.floor(s / 3600)) + ":" + p(Math.floor(s / 60) % 60) + ":" + p(Math.floor(s) % 60);
+  if (tenths) out += "," + Math.floor((s % 1) * 10);
+  return out;
+}
+const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
+const smooth = x => { const t = clamp(x, 0, 1); return t * t * (3 - 2 * t); };
+const mix = (a, b, t) => a + (b - a) * t;
+function H(a, b) {
+  let x = (Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663)) >>> 0;
+  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b) >>> 0;
+  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b) >>> 0;
+  return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
+}
+const MAXZ = VIEW_IDLE.h / VIEW_DIAL.h;
+
+function frameState(t) {
+  const msk = t + MSK_OFF;
+  const sod = ((msk % 86400) + 86400) % 86400;
+  const dt = sod < 43200 ? sod : sod - 86400;
+  const last = offsetOf(11);
+  let k = 0;
+  if (dt >= -60 && dt < -26) k = smooth((dt + 60) / 34);
+  else if (dt >= -26 && dt < last + 3) k = 1;
+  else if (dt >= last + 3 && dt < last + 12) k = 1 - smooth((dt - last - 3) / 9);
+  const zoom = Math.pow(MAXZ, k);
+  // наезд «в точку»: циферблат плавно приходит в центр без бокового рывка
+  const f = (1 - 1 / zoom) / (1 - 1 / MAXZ);
+  const view = { x: mix(VIEW_IDLE.x, VIEW_DIAL.x, f), y: mix(VIEW_IDLE.y, VIEW_DIAL.y, f), h: VIEW_IDLE.h / zoom };
+  // Медленный дрейф камеры в ожидании: к наезду на циферблат он затухает до нуля,
+  // чтобы кадр в полночь остался точно выровненным по фото.
+  const breathe = 1 - k;
+  view.x += (Math.sin(msk / 97) * 16 + Math.sin(msk / 31) * 5) * breathe;
+  view.y += Math.cos(msk / 113) * 9 * breathe;
+  const hour = Math.floor(sod / 3600), since = sod % 3600;
+  const n = hour % 12 === 0 ? 12 : hour % 12;
+  let li = -1;
+  for (let i = 0; i < n; i++) if (offsetOf(i) <= since) li = i;
+  const pulse = li >= 0 && since - offsetOf(li) < 6 ? Math.exp(-(since - offsetOf(li)) * 1.5) : 0;
+  let strikesDone = null;
+  if (hour === 0 && since < last + 8) strikesDone = li + 1;
+  else if (dt > -26 && dt < 0) strikesDone = 0;
+  const md = new Date((msk - dt) * 1000);
+  const isNY = md.getUTCMonth() === 0 && md.getUTCDate() === 1;
+  const year = isNY ? md.getUTCFullYear() : md.getUTCFullYear() + 1;
+  // поздравление появляется вместе с гимном и держится, пока он звучит
+  const gT = dt - (last + melodyPause), gLen = Math.max(30, anthemLen());
+  const greetA = (isNY || demo) && gT > 0 ? smooth(gT / 2) * (1 - smooth((gT - gLen + 4) / 4)) : 0;
+  const nowY = new Date(msk * 1000).getUTCFullYear();
+  // конфетти — короткий залп через пару секунд после того, как отзвучал гимн
+  const anthemEnd = last + melodyPause + gLen;
+  const confT = dt > anthemEnd && dt < anthemEnd + 4.5 ? dt - anthemEnd : null;
+  return {
+    msk, sod, dt, k, zoom, view, pulse, strikesDone, hourIdx: hour % 12, confT,
+    fwT: dt > last + melodyPause && dt < 900 ? dt - last - melodyPause : null,
+    greetA, year, toNY: Date.UTC(nowY + 1, 0, 1) / 1000 - msk, anim: msk % 345600,
+    minuteA: (sod % 3600) / 3600 * TAU, hourA: (sod % 43200) / 43200 * TAU
+  };
+}
+
+/* ============================ рисование ============================ */
+let g, W = 0, Hh = 0, DPR = 1;
+const rgba = (r, gg, b, a = 1) => `rgba(${r | 0},${gg | 0},${b | 0},${a})`;
+const goldA = a => rgba(255, 209, 107, a);
+const GOLD = "rgb(226,196,108)", GOLD_PALE = "rgb(255,242,194)", GOLD_DEEP = "rgb(120,88,26)";
+
+function viewTransform(ctx, v) {
+  const s = Hh / v.h;
+  ctx.setTransform(DPR * s, 0, 0, DPR * s, DPR * (W / 2 - v.x * s), DPR * (Hh / 2 - v.y * s));
+  return s;
+}
+function screenTransform(ctx) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+
+/* ---------- фото ---------- */
+function drawPhoto(st) {
+  const v = st.view, s = viewTransform(g, v);
+  const x0 = v.x - W / 2 / s, x1 = v.x + W / 2 / s, y0 = v.y - Hh / 2 / s, y1 = v.y + Hh / 2 / s;
+  // небо над фото и земля под ним, если кадр шире снимка
+  g.fillStyle = "rgb(16,12,18)"; g.fillRect(x0 - 10, y0 - 10, x1 - x0 + 20, Math.max(0, -y0) + 20);
+  if (IMG.bg) g.drawImage(IMG.bg, -BG.photoLeft * BG_SCALE, 0, BG.w * BG_SCALE, PHOTO.h);
+  if (y1 > PHOTO.h) { g.fillStyle = "rgb(10,9,12)"; g.fillRect(x0 - 10, PHOTO.h - 1, x1 - x0 + 20, y1 - PHOTO.h + 20); }
+  if (photoLayer) g.drawImage(photoLayer, 0, 0, PHOTO.w, PHOTO.h);
+  if (IMG.clock && st.zoom > 1.15) {
+    const [a, b, c, d] = CLOCK_TILE;
+    g.globalAlpha = clamp((st.zoom - 1.15) / 0.5, 0, 1);
+    g.drawImage(IMG.clock, a, b, c - a, d - b);
+    g.globalAlpha = 1;
+  }
+}
+
+/* ---------- циферблаты поверх фото ---------- */
+const NUMERALS = ["XII", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"];
+function dialFace(d, st) {
+  g.save();
+  g.translate(d.cx, d.cy); g.rotate(d.rot * Math.PI / 180); g.scale(d.rx, d.ry); g.rotate(d.phi * Math.PI / 180);
+  const clip = new Path2D(); clip.arc(0, 0, 1.006, 0, TAU);
+  g.clip(clip);
+  const [fr, fg, fb] = d.field;
+  const gr = g.createRadialGradient(-0.25, -0.35, 0, 0, 0, 1.05);
+  gr.addColorStop(0, rgba(fr * 1.25, fg * 1.25, fb * 1.25));
+  gr.addColorStop(1, rgba(fr * 0.8, fg * 0.8, fb * 0.8));
+  g.fillStyle = gr; g.fillRect(-1.1, -1.1, 2.2, 2.2);
+  // минутная дорожка у края
+  const lg = d.light;
+  // мягкая пульсация подсветки текущего часа
+  const lit = 0.5 + 0.5 * Math.sin(st.anim * 0.7);
+  for (let m = 0; m < 60; m++) {
+    const a = m / 60 * TAU, r = 0.955, big = m % 5 === 0;
+    const cur = big && m / 5 % 12 === st.hourIdx;
+    g.fillStyle = cur ? rgba(255, 236, 176, 0.55 + 0.45 * lit) : GOLD;
+    g.beginPath(); g.arc(Math.sin(a) * r, -Math.cos(a) * r, cur ? 0.027 : big ? 0.016 : 0.009, 0, TAU); g.fill();
+  }
+  // римские цифры, основанием к центру
+  g.font = '500 100px "Cormorant Garamond", Georgia, serif';
+  g.textAlign = "center"; g.textBaseline = "middle";
+  const base = rgba(214 * lg + 30, 186 * lg + 26, 92 * lg + 10);
+  NUMERALS.forEach((s, k) => {
+    const cur = k === st.hourIdx;
+    g.save();
+    g.rotate(k / 12 * TAU); g.translate(0, -0.81);
+    if (cur) {   // тёплый ореол за цифрой текущего часа
+      const gl = g.createRadialGradient(0, 0, 0, 0, 0, 0.145);
+      gl.addColorStop(0, goldA(0.11 + 0.1 * lit));
+      gl.addColorStop(0.55, goldA(0.035 + 0.045 * lit));
+      gl.addColorStop(1, goldA(0));
+      g.fillStyle = gl; g.beginPath(); g.arc(0, 0, 0.145, 0, TAU); g.fill();
+    }
+    g.scale(0.0023, 0.0029);
+    g.fillStyle = cur ? rgba(255, 244, 206) : base;
+    g.fillText(s, 0, 6);
+    g.restore();
+  });
+  // стрелки (на фото — тёмные с золотой окантовкой)
+  for (const shadow of [true, false]) {
+    hand(st.hourA, true, shadow);
+    hand(st.minuteA, false, shadow);
+  }
+  g.fillStyle = GOLD; g.beginPath(); g.arc(0, 0, 0.045, 0, TAU); g.fill();
+  g.fillStyle = "rgb(30,26,20)"; g.beginPath(); g.arc(0, 0, 0.018, 0, TAU); g.fill();
+  // мягкий тёплый блик от прожекторов
+  g.globalCompositeOperation = "lighter";
+  const hl = g.createRadialGradient(-0.4, 0.55, 0, -0.4, 0.55, 1.2);
+  hl.addColorStop(0, rgba(255, 190, 120, 0.06 * lg)); hl.addColorStop(1, "rgba(255,190,120,0)");
+  g.fillStyle = hl; g.fillRect(-1.1, -1.1, 2.2, 2.2);
+  g.restore();
+}
+function hand(angle, isHour, shadow) {
+  g.save();
+  if (shadow) g.translate(0.012, 0.02);
+  g.rotate(angle);
+  const p = new Path2D();
+  if (isHour) {
+    p.moveTo(-0.022, 0.16); p.lineTo(0.022, 0.16); p.lineTo(0.026, -0.3); p.lineTo(-0.026, -0.3); p.closePath();
+    p.moveTo(-0.06, -0.42); p.lineTo(0, -0.6); p.lineTo(0.06, -0.42); p.lineTo(0, -0.45); p.closePath();
+    p.moveTo(-0.02, -0.38); p.lineTo(0.02, -0.38); p.lineTo(0.02, -0.44); p.lineTo(-0.02, -0.44); p.closePath();
+  } else {
+    p.moveTo(-0.014, 0.2); p.lineTo(0.014, 0.2); p.lineTo(0.009, -0.78); p.lineTo(-0.009, -0.78); p.closePath();
+    p.moveTo(-0.035, -0.74); p.lineTo(0, -0.88); p.lineTo(0.035, -0.74); p.lineTo(0, -0.76); p.closePath();
+  }
+  const ring = new Path2D();
+  const rc = isHour ? -0.34 : -0.24, rr = isHour ? 0.065 : 0.045;
+  ring.arc(0, rc, rr, 0, TAU);
+  if (shadow) {
+    g.fillStyle = "rgba(0,0,0,0.45)"; g.fill(p);
+    g.strokeStyle = "rgba(0,0,0,0.45)"; g.lineWidth = 0.02; g.stroke(ring);
+  } else {
+    g.fillStyle = "rgb(22,20,18)"; g.fill(p);
+    g.strokeStyle = GOLD; g.lineWidth = 0.007; g.stroke(p);
+    g.lineWidth = 0.02; g.stroke(ring);
+  }
+  g.restore();
+}
+function drawDials(st) {
+  viewTransform(g, st.view);
+  for (const d of DIALS) {
+    dialFace(d, st);
+    const o = IMG["occl" + d.key];
+    if (o) { const [a, b, c, e] = d.tile; g.drawImage(o, a, b, c - a, e - b); }
+  }
+}
+
+/* ---------- живой свет: звезда, звонница на ударах ---------- */
+function glow(x, y, r, color, a) {
+  const gr = g.createRadialGradient(x, y, 0, x, y, r);
+  gr.addColorStop(0, color(a)); gr.addColorStop(1, color(0));
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+}
+function drawLights(st) {
+  viewTransform(g, st.view);
+  g.globalCompositeOperation = "lighter";
+  const fl = 0.85 + 0.15 * Math.sin(st.anim * 1.7);
+  glow(STAR.x, STAR.y, 260, a => rgba(255, 30, 20, a), (0.16 + 0.18 * st.pulse) * fl);
+  if (st.pulse > 0.01) {
+    glow(BELFRY.x, BELFRY.y, 320, a => rgba(255, 170, 80, a), 0.22 * st.pulse);
+    const d = DIALS[0];
+    g.save(); g.translate(d.cx, d.cy); g.rotate(d.rot * Math.PI / 180); g.scale(1, d.ry / d.rx);
+    const gr = g.createRadialGradient(0, 0, d.rx * 1.05, 0, 0, d.rx * 1.6);
+    gr.addColorStop(0, goldA(0.22 * st.pulse)); gr.addColorStop(1, goldA(0));
+    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, d.rx * 1.6, 0, TAU); g.fill();
+    g.restore();
+  }
+  g.globalCompositeOperation = "source-over";
+}
+
+/* ---------- небо: звёзды и салют за башней (по маске неба) ---------- */
+let sky = null, skyCtx = null;
+function drawSkyLayer(st) {
+  if (!sky) return;
+  const c = skyCtx;
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.globalCompositeOperation = "source-over";
+  c.clearRect(0, 0, sky.width, sky.height);
+  const keep = g; g = c;
+  // звёзды (экран)
+  screenTransform(c);
+  c.globalCompositeOperation = "lighter";
+  for (let i = 0; i < 160; i++) {
+    const yy = Math.pow(H(i, 2), 1.4) * 0.55;
+    const tw = 0.55 + 0.45 * Math.sin(st.anim * (0.7 + H(i, 3) * 2.6) + H(i, 4) * 6.28);
+    const a = tw * (0.25 + 0.6 * H(i, 6)) * (1 - st.k * 0.5);
+    c.fillStyle = rgba(225, 232, 255, a);
+    c.beginPath(); c.arc(H(i, 1) * W, yy * Hh, 0.6 + H(i, 5) * 1.3, 0, TAU); c.fill();
+  }
+  drawPlanes(st);
+  if (st.fwT != null) {
+    const f = skyFlash(st.fwT);
+    if (f) { c.fillStyle = rgba(f.r, f.g, f.b, Math.min(0.14, f.i * 0.5)); c.fillRect(0, 0, W, Hh); }
+    const fv = { x: st.view.x, y: st.view.y, h: st.view.h * Math.pow(st.zoom, 0.4) };
+    viewTransform(c, fv);
+    c.transform(M.s, 0, 0, M.s, M.x0, M.y0);
+    fireworks(st.fwT);
+  }
+  // луна: в мировых координатах, маска неба обрежет её силуэтом башни
+  viewTransform(c, st.view);
+  c.globalCompositeOperation = "source-over";
+  drawMoon(st);
+  // оставить только небо
+  c.globalCompositeOperation = "destination-in";
+  viewTransform(c, st.view);
+  if (IMG.mask) c.drawImage(IMG.mask, -BG.photoLeft * BG_SCALE, 0, BG.w * BG_SCALE, PHOTO.h);
+  g = keep;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = "lighter";
+  g.drawImage(sky, 0, 0);
+  g.globalCompositeOperation = "source-over";
+}
+
+const FW_PAL = [[255, 204, 102], [255, 64, 51], [89, 255, 128], [115, 158, 255], [217, 128, 255], [255, 255, 242], [255, 140, 51]];
+const FW_COUNT = 1250;
+const fwLaunch = i => i < 40 ? i * 0.32 + H(i, 0) * 0.25 : 12.8 + (i - 40) * 0.7 + H(i, 0) * 0.5;
+const fwIndex = t => t < 12.8 ? Math.floor(t / 0.32) : 40 + Math.floor((t - 12.8) / 0.7);
+function shell(i) {
+  const lx = (H(i, 2) - 0.5) * 150, type = Math.floor(H(i, 5) * 4);
+  return {
+    lx, bx: lx + (H(i, 3) - 0.5) * 10, bh: 32 + H(i, 4) * 32, rise: 1.4 + H(i, 1) * 0.7, type,
+    col: FW_PAL[Math.floor(H(i, 6) * FW_PAL.length) % FW_PAL.length],
+    life: type === 2 ? 4.6 : 2.6 + H(i, 7) * 0.9, speed: 20 + H(i, 10) * 9,
+    drag: type === 2 ? 2 : 1.4, grav: type === 2 ? 3 : 5
+  };
+}
+function skyFlash(t) {
+  let sum = 0, r = 0, gg = 0, b = 0;
+  const lo = Math.max(0, fwIndex(t - 3) - 2), hi = Math.min(FW_COUNT - 1, fwIndex(t) + 2);
+  for (let i = lo; i <= hi; i++) {
+    const sh = shell(i), s = t - fwLaunch(i) - sh.rise;
+    if (s < 0 || s >= 0.8) continue;
+    const f = (1 - s / 0.8) * 0.09;
+    sum += f; r += sh.col[0] * f; gg += sh.col[1] * f; b += sh.col[2] * f;
+  }
+  return sum > 0 ? { i: sum, r: r / sum, g: gg / sum, b: b / sum } : null;
+}
+function fwCirc(x, h, r) { const p = new Path2D(); p.moveTo(x + r, -h); p.arc(x, -h, r, 0, TAU); return p; }
+function fireworks(t) {
+  g.globalCompositeOperation = "lighter";
+  const lo = Math.max(0, fwIndex(t - 8) - 2), hi = Math.min(FW_COUNT - 1, fwIndex(t) + 2);
+  for (let i = lo; i <= hi; i++) {
+    const s0 = t - fwLaunch(i);
+    if (s0 < 0) continue;
+    const sh = shell(i), [cr, cg, cb] = sh.col;
+    if (s0 < sh.rise) {
+      const rp = u => { const e = 1 - (1 - u) * (1 - u); return [mix(sh.lx, sh.bx, e), 8 + (sh.bh - 8) * e]; };
+      const u = s0 / sh.rise, hd = rp(u), tl = rp(Math.max(0, u - 0.12));
+      g.strokeStyle = "rgba(255,204,128,0.55)"; g.lineWidth = 0.16; g.lineCap = "round";
+      g.beginPath(); g.moveTo(tl[0], -tl[1]); g.lineTo(hd[0], -hd[1]); g.stroke();
+      g.fillStyle = "rgb(255,235,191)"; g.fill(fwCirc(hd[0], hd[1], 0.18));
+      continue;
+    }
+    const s = s0 - sh.rise;
+    if (s >= sh.life) continue;
+    const fade = Math.pow(1 - s / sh.life, 1.3);
+    if (s < 0.5) {
+      const gr = g.createRadialGradient(sh.bx, -sh.bh, 0, sh.bx, -sh.bh, 14);
+      gr.addColorStop(0, rgba(cr, cg, cb, 0.5 * (1 - s / 0.5))); gr.addColorStop(1, rgba(cr, cg, cb, 0));
+      g.fillStyle = gr; g.fill(fwCirc(sh.bx, sh.bh, 14));
+    }
+    const n = sh.type === 3 ? 52 : 76, trail = sh.type === 2 ? 0.6 : 0.22;
+    const heads = new Path2D(), trails = new Path2D();
+    const pos = (vx, vy, s) => { const f = (1 - Math.exp(-sh.drag * s)) / sh.drag; return [sh.bx + vx * f, sh.bh + vy * f - 0.5 * sh.grav * s * s]; };
+    const crackle = sh.type === 1 && s > 0.6, hr = crackle ? 0.2 : 0.15;
+    for (let j = 0; j < n; j++) {
+      const seed = i * 131 + j;
+      const phi = TAU * j / n + H(seed, 8) * 0.2;
+      let sp = sh.speed;
+      if (sh.type !== 3) { const u = H(seed, 9) * 2 - 1; sp *= Math.sqrt(Math.max(0, 1 - u * u)) * (0.85 + 0.15 * H(seed, 12)); }
+      const vx = Math.cos(phi) * sp; let vy = Math.sin(phi) * sp;
+      if (sh.type === 3) vy *= 0.45;
+      if (crackle && H(seed, Math.floor(s * 22)) < 0.5) continue;
+      const p = pos(vx, vy, s), q = pos(vx, vy, Math.max(0, s - trail));
+      trails.moveTo(q[0], -q[1]); trails.lineTo(p[0], -p[1]);
+      heads.moveTo(p[0] + hr, -p[1]); heads.arc(p[0], -p[1], hr, 0, TAU);
+    }
+    g.strokeStyle = rgba(cr, cg, cb, 0.42 * fade); g.lineWidth = 0.14; g.lineCap = "round"; g.stroke(trails);
+    g.fillStyle = crackle ? rgba(255, 255, 230, fade) : rgba(cr, cg, cb, fade); g.fill(heads);
+  }
+}
+
+/* ---------- живое небо: луна и самолёты ---------- */
+const MOON = { x: 900, y: 1040, r: 110 };
+const MOON_SPOTS = [[-0.30, -0.20, 0.24, 0.09], [0.18, 0.10, 0.30, 0.07], [0.02, -0.44, 0.15, 0.08], [-0.12, 0.40, 0.20, 0.05]];
+
+function drawMoon(st) {
+  // собственный очень медленный дрейф: луна «плывёт» относительно кадра
+  const mx = MOON.x + Math.sin(st.anim / 420) * 24;
+  const my = MOON.y + Math.cos(st.anim / 610) * 14;
+  const r = MOON.r;
+  g.save();
+  const halo = g.createRadialGradient(mx, my, r * 0.85, mx, my, r * 5);
+  halo.addColorStop(0, "rgba(214,224,255,0.20)");
+  halo.addColorStop(0.4, "rgba(196,210,255,0.07)");
+  halo.addColorStop(1, "rgba(196,210,255,0)");
+  g.fillStyle = halo; g.beginPath(); g.arc(mx, my, r * 5, 0, TAU); g.fill();
+  const disc = g.createRadialGradient(mx - r * 0.32, my - r * 0.36, r * 0.06, mx, my, r);
+  disc.addColorStop(0, "rgb(255,253,240)");
+  disc.addColorStop(0.65, "rgb(243,238,214)");
+  disc.addColorStop(1, "rgb(206,198,172)");
+  g.fillStyle = disc; g.beginPath(); g.arc(mx, my, r, 0, TAU); g.fill();
+  g.save();
+  g.beginPath(); g.arc(mx, my, r * 0.98, 0, TAU); g.clip();
+  for (const [dx, dy, cr, a] of MOON_SPOTS) {
+    const px = mx + dx * r, py = my + dy * r, pr = cr * r;
+    const cg = g.createRadialGradient(px, py, 0, px, py, pr);
+    cg.addColorStop(0, "rgba(120,112,92," + a + ")"); cg.addColorStop(1, "rgba(120,112,92,0)");
+    g.fillStyle = cg; g.beginPath(); g.arc(px, py, pr, 0, TAU); g.fill();
+  }
+  g.restore();
+  g.restore();
+}
+
+const PLANE = { period: 149, dur: 27 };
+function drawPlanes(st) {
+  const t = st.anim;
+  const slot = Math.floor(t / PLANE.period);
+  const u = (t - slot * PLANE.period) / PLANE.dur;
+  if (u >= 1) return;
+  const u2 = Math.max(0.6, Hh / 1080);
+  const dir = slot % 2 ? -1 : 1;
+  const x = mix(-0.08 * W, 1.08 * W, dir > 0 ? u : 1 - u);
+  const y = (0.1 + H(slot, 21) * 0.2) * Hh + Math.sin(t * 0.22) * 3 * u2;
+  const blink = Math.sin(t * 5.4) > 0.2;
+  // дымный след: еле заметная полоса, тянущаяся за бортом
+  const tl = 170 * u2;
+  const tg = g.createLinearGradient(x - dir * tl, y, x, y);
+  tg.addColorStop(0, "rgba(198,210,245,0)");
+  tg.addColorStop(0.7, "rgba(198,210,245,0.045)");
+  tg.addColorStop(1, "rgba(224,232,255,0.1)");
+  g.strokeStyle = tg; g.lineWidth = 1.7 * u2; g.lineCap = "round";
+  g.beginPath(); g.moveTo(x - dir * tl, y + 1.1 * u2); g.lineTo(x, y); g.stroke();
+  // сам корпус: короткий штрих по курсу
+  g.strokeStyle = "rgba(198,206,226,0.16)"; g.lineWidth = 1.5 * u2;
+  g.beginPath(); g.moveTo(x - dir * 5 * u2, y + 0.6 * u2); g.lineTo(x + dir * 5 * u2, y - 0.6 * u2); g.stroke();
+  const gr = g.createRadialGradient(x, y, 0, x, y, 9 * u2);
+  gr.addColorStop(0, rgba(255, 252, 235, 0.95 * (blink ? 1 : 0.12)));
+  gr.addColorStop(0.3, rgba(255, 246, 214, 0.34 * (blink ? 1 : 0.12)));
+  gr.addColorStop(1, rgba(255, 246, 214, 0));
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, 9 * u2, 0, TAU); g.fill();
+  if (blink) {   // проблесковый огонь: короткие лучи
+    g.strokeStyle = "rgba(255,250,232,0.5)"; g.lineWidth = 0.9 * u2;
+    g.beginPath();
+    g.moveTo(x - 7 * u2, y); g.lineTo(x + 7 * u2, y);
+    g.moveTo(x, y - 7 * u2); g.lineTo(x, y + 7 * u2);
+    g.stroke();
+  } else {
+    g.fillStyle = "rgba(255,255,245,0.26)";
+    g.beginPath(); g.arc(x, y, 1.2 * u2, 0, TAU); g.fill();
+  }
+  // красный маячок на крыле мигает в противофазе
+  g.fillStyle = rgba(255, 72, 48, blink ? 0.16 : 0.85);
+  g.beginPath(); g.arc(x - dir * 9 * u2, y + 2 * u2, 1.3 * u2, 0, TAU); g.fill();
+}
+
+/* ---------- воздух, свет и конфетти (экран) ---------- */
+let vigGrad = null, vigKey = "";
+function vignette() {
+  const key = W + "x" + Hh;
+  if (!vigGrad || vigKey !== key) {
+    const cx = W * 0.5, cy = Hh * 0.52;
+    const gr = g.createRadialGradient(cx, cy, Math.min(W, Hh) * 0.42, cx, cy, Math.hypot(W, Hh) * 0.64);
+    gr.addColorStop(0, "rgba(0,0,0,0)");
+    gr.addColorStop(0.6, "rgba(0,0,0,0.13)");
+    gr.addColorStop(1, "rgba(0,0,0,0.5)");
+    vigGrad = gr; vigKey = key;
+  }
+  g.fillStyle = vigGrad; g.fillRect(0, 0, W, Hh);
+}
+
+// отблеск залпов на брусчатке и снегу: тёплым светом снизу кадра
+function groundGlow(st) {
+  if (st.fwT == null) return;
+  const f = skyFlash(st.fwT);
+  if (!f) return;
+  const a = Math.min(0.4, f.i * 1.5);
+  if (a < 0.005) return;
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  const top = Hh * 0.55;
+  const gr = g.createLinearGradient(0, Hh, 0, top);
+  gr.addColorStop(0, rgba(f.r, f.g, f.b, a * 0.6));
+  gr.addColorStop(0.5, rgba(f.r, f.g, f.b, a * 0.18));
+  gr.addColorStop(1, rgba(f.r, f.g, f.b, 0));
+  g.fillStyle = gr; g.fillRect(0, top, W, Hh - top);
+  const gr2 = g.createLinearGradient(0, Hh, 0, Hh - 110);
+  gr2.addColorStop(0, rgba(f.r, f.g, f.b, a * 0.4));
+  gr2.addColorStop(1, rgba(f.r, f.g, f.b, 0));
+  g.fillStyle = gr2; g.fillRect(0, Hh - 110, W, 110);
+  g.restore();
+}
+
+const CONF_PAL = [[255, 214, 120], [255, 92, 76], [120, 230, 150], [130, 170, 255], [255, 255, 240], [232, 150, 255]];
+const CONF_COUNT = 140;
+function confetti(st) {
+  if (st.confT == null || st.confT > 3.6) return;
+  const t = st.confT;
+  const u = Math.max(0.6, Hh / 1080);
+  for (let i = 0; i < CONF_COUNT; i++) {
+    const age = t - H(i, 31) * 1.1;
+    if (age < 0) continue;
+    const life = 2.2 + H(i, 32) * 1.4;
+    if (age > life) continue;
+    const pal = CONF_PAL[Math.floor(H(i, 33) * CONF_PAL.length) % CONF_PAL.length];
+    const x = H(i, 34) * W + Math.sin(age * (1.6 + H(i, 35) * 2.2) + i) * 26 * u + age * (H(i, 36) - 0.5) * 60 * u;
+    const y = -30 * u + age * (220 + H(i, 37) * 260) * u + 130 * u * age * age;
+    const rot = age * (2.4 + H(i, 38) * 6) * (H(i, 39) > 0.5 ? 1 : -1);
+    const w = (5 + H(i, 40) * 6) * u, h = (9 + H(i, 41) * 14) * u;
+    // «переворот» бумажки: ширина дышит, будто она кувыркается в воздухе
+    const flip = 0.28 + 0.72 * Math.abs(Math.cos(age * (2.2 + H(i, 42) * 3.4) + i * 0.7));
+    g.save();
+    g.translate(x, y); g.rotate(rot);
+    g.globalAlpha = Math.min(1, (life - age) / 0.6) * 0.95;
+    g.fillStyle = rgba(pal[0], pal[1], pal[2]);
+    g.fillRect(-w * flip / 2, -h / 2, w * flip, h);
+    g.restore();
+  }
+}
+
+/* ---------- снег и надписи (экран) ---------- */
+function snow(st) {
+  const u = Math.max(0.6, Hh / 1080);
+  const sw = W + 40, sh = Hh + 40;
+  g.fillStyle = "rgba(255,255,255,0.6)";
+  g.beginPath();
+  for (let i = 0; i < 360; i++) {
+    const x = ((H(i, 10) * sw + st.anim * 9 * u + Math.sin(st.anim * (0.4 + H(i, 13)) + i) * 18 * u) % sw) - 20;
+    const y = ((H(i, 12) * sh + st.anim * (22 + H(i, 11) * 45) * u) % sh) - 20;
+    const r = (0.8 + H(i, 14) * 2.2) * u;
+    g.moveTo(x + r, y); g.arc(x, y, r, 0, TAU);
+  }
+  g.fill();
+}
+function countdown(s) {
+  const t = Math.max(0, Math.ceil(s));
+  const d = Math.floor(t / 86400), p = n => String(n).padStart(2, "0");
+  const x = p(Math.floor(t / 3600) % 24) + ":" + p(Math.floor(t / 60) % 60) + ":" + p(t % 60);
+  return d > 0 ? d + " дн " + x : x;
+}
+// компактный виджет радио: название станции и живые полоски эквалайзера
+function radioWidget(st, hudA, uu) {
+  if (!started || !RADIO.on || hudA < 0.02) return;
+  const right = W - 56 * uu, baseY = Hh - 84 * uu;
+  const name = RADIO.label();
+  const playing = RADIO.playing && !RADIO.muted;
+  g.save();
+  g.globalAlpha = hudA * 0.88;
+  g.textAlign = "right"; g.textBaseline = "middle";
+  g.shadowColor = "rgba(0,0,0,0.95)"; g.shadowBlur = 8 * uu;
+  g.font = `500 ${Math.round(25 * uu)}px Inter, system-ui, sans-serif`;
+  g.fillStyle = RADIO.muted ? "rgba(206,200,186,0.8)" : GOLD_PALE;
+  g.fillText(name, right, baseY);
+  const tw = g.measureText(name).width;
+  const n = 6, bw = 3.6 * uu, gap = 4 * uu, hmax = 27 * uu;
+  const endX = right - tw - 14 * uu;
+  g.shadowBlur = 0;
+  for (let i = 0; i < n; i++) {
+    const ph = st.anim * (1.6 + i * 0.37) + i * 1.7;
+    const amp = playing
+      ? 0.22 + 0.78 * Math.abs(Math.sin(ph)) * (0.6 + 0.4 * Math.abs(Math.sin(ph * 0.37 + i)))
+      : 0.14;
+    const hh = Math.max(3 * uu, hmax * amp);
+    g.fillStyle = playing ? GOLD_PALE : goldA(0.35);
+    g.fillRect(endX - (n - 1 - i) * (bw + gap) - bw, baseY - hh / 2, bw, hh);
+  }
+  g.restore();
+}
+function overlays(st) {
+  const uu = Math.max(Math.min(W / 1920, Hh / 1080), 0.42);
+  const serif = (w, px) => `${w} ${Math.round(px * uu)}px "Cormorant Garamond", Georgia, serif`;
+  if (st.strikesDone != null) {
+    const gap = 46 * uu, y = Hh - 70 * uu, x0 = W / 2 - gap * 5.5, rr = 9 * uu;
+    for (let i = 0; i < 12; i++) {
+      const x = x0 + i * gap;
+      if (i < st.strikesDone) {
+        const gl = i === st.strikesDone - 1 ? st.pulse : 0;
+        g.globalCompositeOperation = "lighter";
+        const gr = g.createRadialGradient(x, y, 0, x, y, rr * 2.6);
+        gr.addColorStop(0, goldA(0.35 + 0.5 * gl)); gr.addColorStop(1, goldA(0));
+        g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr * 2.6, 0, TAU); g.fill();
+        g.globalCompositeOperation = "source-over";
+        g.fillStyle = GOLD; g.beginPath(); g.arc(x, y, rr, 0, TAU); g.fill();
+      } else {
+        g.strokeStyle = goldA(0.55); g.lineWidth = 1.5; g.beginPath(); g.arc(x, y, rr, 0, TAU); g.stroke();
+      }
+    }
+  }
+  // крупная цифра удара рядом с циферблатом: вспыхивает на каждом ударе и гаснет
+  if (st.strikesDone > 0) {
+    const a = Math.min(1, st.pulse * 2.4);
+    if (a > 0.02) {
+      const sDial = Hh / VIEW_DIAL.h;
+      const nx = W / 2 + DIALS[0].rx * sDial * 1.78, ny = Hh / 2, nr = 0.23 * Hh;
+      g.save();
+      g.globalAlpha = a;
+      // тёмное «пятно» под цифрой: иначе золото теряется на белой кладке башни
+      const bg = g.createRadialGradient(nx, ny, 0, nx, ny, nr);
+      bg.addColorStop(0, "rgba(8,6,10,0.62)");
+      bg.addColorStop(0.55, "rgba(8,6,10,0.34)");
+      bg.addColorStop(1, "rgba(8,6,10,0)");
+      g.fillStyle = bg; g.beginPath(); g.arc(nx, ny, nr, 0, TAU); g.fill();
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.font = serif(500, 0.32 * Hh);
+      g.shadowColor = "rgba(255,150,60,0.8)"; g.shadowBlur = 26 * uu;
+      g.fillStyle = GOLD_PALE;
+      g.fillText(String(st.strikesDone), nx, ny);
+      g.shadowBlur = 0;
+      g.strokeStyle = "rgba(52,26,8,0.7)"; g.lineWidth = 2.4 * uu;
+      g.strokeText(String(st.strikesDone), nx, ny);
+      g.restore();
+    }
+  }
+  if (st.greetA > 0.001) {
+    g.save();
+    g.globalAlpha = st.greetA; g.textAlign = "center"; g.textBaseline = "middle";
+    g.shadowColor = "rgba(255,153,51,0.85)"; g.shadowBlur = 22 * uu;
+    g.fillStyle = GOLD_PALE; g.font = serif(600, 96);
+    const gy = Hh - 150 * uu;
+    g.fillText(`С Новым ${st.year} годом!`, W / 2, gy);
+    g.shadowColor = "rgba(0,0,0,0.9)"; g.shadowBlur = 10 * uu;
+    g.globalAlpha = st.greetA * 0.9; g.fillStyle = "#fff"; g.font = serif(500, 36);
+    g.fillText("Москва · Кремль", W / 2, gy + 74 * uu);
+    g.restore();
+  }
+  const hudA = (1 - st.k) * (1 - st.greetA);
+  if (hudA > 0.01) {
+    g.save();
+    g.globalAlpha = hudA * 0.9; g.textAlign = "left"; g.textBaseline = "middle";
+    g.shadowColor = "rgba(0,0,0,0.95)"; g.shadowBlur = 8 * uu;
+    const left = 56 * uu;
+    g.fillStyle = "#fff"; g.font = serif(600, 64);
+    g.fillText("Москва  " + hms(st.msk - MSK_OFF), left, Hh - 152 * uu);
+    g.fillStyle = GOLD_PALE; g.font = serif(500, 48);
+    g.fillText("До Нового года: " + countdown(st.toNY), left, Hh - 84 * uu);
+    g.restore();
+  }
+  const loadingAudio = started && AUD.ctx && (AUD.loading || (!AUD.anthem && !AUD.anthemFailed));
+  if (loadingAudio) {
+    g.save(); g.textAlign = "right"; g.textBaseline = "middle";
+    g.shadowColor = "rgba(0,0,0,0.9)"; g.shadowBlur = 6;
+    g.globalAlpha = 0.55 + 0.25 * Math.sin(st.anim * 3);
+    g.fillStyle = GOLD_PALE; g.font = serif(500, 28);
+    g.fillText("Загружается звук курантов…", W - 56 * uu, Hh - 60 * uu);
+    g.restore();
+  }
+  if (demo) {
+    g.save(); g.textAlign = "left"; g.textBaseline = "middle"; g.fillStyle = goldA(0.9);
+    g.shadowColor = "rgba(0,0,0,0.9)"; g.shadowBlur = 6;
+    g.font = serif(700, 26); g.fillText("ДЕМО", 56 * uu, 60 * uu); g.restore();
+  }
+  radioWidget(st, hudA, uu);
+}
+
+/* ---------- кадр ---------- */
+const canvas = document.getElementById("scene");
+const main = canvas.getContext("2d");
+function resize() {
+  W = window.innerWidth; Hh = window.innerHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  if (!W || !Hh) return;
+  canvas.width = Math.round(W * DPR); canvas.height = Math.round(Hh * DPR);
+  sky = document.createElement("canvas");
+  sky.width = canvas.width; sky.height = canvas.height;
+  skyCtx = sky.getContext("2d");
+}
+function render() {
+  requestAnimationFrame(render);
+  if (window.innerWidth !== W || window.innerHeight !== Hh || Math.min(window.devicePixelRatio || 1, 2) !== DPR) resize();
+  if (!W || !Hh) return;
+  const st = frameState(nowVirt());
+  g = main;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = "rgb(7,7,12)"; g.fillRect(0, 0, canvas.width, canvas.height);
+  drawPhoto(st);
+  drawSkyLayer(st);
+  drawDials(st);
+  drawLights(st);
+  screenTransform(g);
+  groundGlow(st);
+  vignette();
+  snow(st);
+  confetti(st);
+  overlays(st);
+}
+
+/* ============================ звук ============================ */
+// Запасной синтез колокола — только если записи нет совсем.
+function synthBell(ctx, freq, secs, gain) {
+  const sr = ctx.sampleRate, n = Math.floor(secs * sr), s = new Float32Array(n);
+  const partials = [[0.5, 0.45, 1], [1, 0.6, 0.75], [1.19, 0.45, 0.55], [1.5, 0.2, 0.42], [2, 0.5, 0.34], [2.51, 0.15, 0.24], [2.99, 0.22, 0.18], [4.07, 0.12, 0.1]];
+  partials.forEach(([ratio, amp, dec], idx) => {
+    const f = freq * ratio, decay = Math.exp(-6.91 / (secs * dec * sr)), beat = 0.12 + 0.09 * idx;
+    const w1 = TAU * (f - beat / 2) / sr, w2 = TAU * (f + beat / 2) / sr;
+    let p1 = H(idx, 1) * TAU, p2 = H(idx, 2) * TAU, env = amp;
+    for (let i = 0; i < n && env > 1e-5; i++) { s[i] += env * (Math.sin(p1) + 0.8 * Math.sin(p2)) * 0.5; p1 += w1; p2 += w2; env *= decay; }
+  });
+  let peak = 0; for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(s[i]));
+  for (let i = 0; i < n; i++) s[i] *= gain / (peak || 1);
+  const b = ctx.createBuffer(1, n, sr); b.copyToChannel(s, 0); return b;
+}
+
+/* «В лесу родилась ёлочка» (Л. Бекман, 1905) — аранжировка рендерится в браузере:
+   челеста, мягкие аккорды, бас, во втором куплете бубенцы. Около 27 с. */
+async function renderYolochka() {
+  const sr = 44100, E = 0.3;                  // длительность восьмой, с
+  const lines = [                              // [midi | null(пауза), восьмые]; каждая строка — 10 восьмых
+    [[60, 1], [69, 1], [69, 1], [67, 1], [69, 1], [65, 1], [60, 1], [60, 1], [60, 2]],
+    [[60, 1], [69, 1], [69, 1], [70, 1], [67, 1], [72, 1], [72, 3], [null, 1]],
+    [[60, 1], [62, 1], [62, 1], [70, 1], [70, 1], [69, 1], [67, 1], [65, 2], [null, 1]],
+    [[60, 1], [69, 1], [69, 1], [67, 1], [69, 1], [65, 3], [null, 2]]
+  ];
+  const CH = { F: [57, 60, 65], C: [55, 58, 64], B: [58, 62, 65] };
+  const BASS = { F: 41, C: 48, B: 46 };
+  const harm = [["F", "F"], ["F", "C"], ["B", "C"], ["F", "F"]];
+  const lineLen = 10 * E, total = 8 * lineLen + 3.2;
+  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const ctx = new OAC(2, Math.ceil(total * sr), sr);
+  const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+  const bus = ctx.createGain(); bus.gain.value = 1;
+  const conv = ctx.createConvolver();
+  const ir = ctx.createBuffer(2, Math.floor(sr * 2.2), sr);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / sr / 0.55) * 0.5; }
+  conv.buffer = ir;
+  const wet = ctx.createGain(); wet.gain.value = 0.32;
+  bus.connect(ctx.destination); bus.connect(conv); conv.connect(wet); wet.connect(ctx.destination);
+  const env = (g, t, peak, a, d) => { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); };
+  const celesta = (t, m, gain) => {
+    for (const [mul, amp, dec] of [[1, 1, 1.4], [2, 0.3, 0.8], [3.99, 0.12, 0.4], [6.2, 0.05, 0.2]]) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = hz(m) * mul;
+      env(g, t, gain * amp, 0.004, dec); o.connect(g); g.connect(bus); o.start(t); o.stop(t + dec + 0.1);
+    }
+  };
+  const pad = (t, notes, dur) => {
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1400; lp.connect(bus);
+    for (const m of notes) for (const det of [-6, 6]) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "triangle"; o.frequency.value = hz(m); o.detune.value = det;
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.022, t + 0.15);
+      g.gain.setValueAtTime(0.022, t + dur - 0.2); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
+      o.connect(g); g.connect(lp); o.start(t); o.stop(t + dur + 0.3);
+    }
+  };
+  const bass = (t, m) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "triangle"; o.frequency.value = hz(m); env(g, t, 0.16, 0.01, 1.1);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + 1.2);
+  };
+  const noise = ctx.createBuffer(1, Math.floor(sr * 0.25), sr);
+  { const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const jingle = (t, gain) => {
+    const s = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise; hp.type = "highpass"; hp.frequency.value = 6500;
+    env(g, t, gain, 0.002, 0.12); s.connect(hp); hp.connect(g); g.connect(bus); s.start(t); s.stop(t + 0.2);
+  };
+  let t = 0.15;
+  for (let verse = 0; verse < 2; verse++) {
+    lines.forEach((line, li) => {
+      const t0 = t;
+      harm[li].forEach((h, k) => {
+        const th = t0 + k * lineLen / 2;
+        pad(th, CH[h], lineLen / 2);
+        bass(th, BASS[h]); bass(th + lineLen / 4, BASS[h] + (verse ? 7 : 12));
+      });
+      for (const [m, n] of line) {
+        if (m != null) {
+          celesta(t, m, 0.22);
+          if (verse === 1) celesta(t, m + 12, 0.09);
+        }
+        t += n * E;
+      }
+      if (verse === 1) for (let k = 0; k < 10; k++) jingle(t0 + k * E, k % 2 ? 0.03 : 0.06);
+    });
+  }
+  // финальный аккорд фа мажор
+  pad(t, [57, 60, 65, 69], 2.4); bass(t, 41); celesta(t, 65, 0.2); celesta(t, 77, 0.1); celesta(t + 0.02, 72, 0.12);
+  const buf = await ctx.startRendering();
+  let peak = 0;
+  for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i])); }
+  if (peak > 0) for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] *= 0.85 / peak; }
+  return buf;
+}
+
+const AUD = {
+  ctx: null, master: null, preGain: null, builtin: null, custom: null, melody: null, salute: null, synth: null,
+  anthemBuiltin: null, prelude: null, preludeBuiltin: null,
+  scheduled: new Map(), sources: new Set(),
+  get rec() { return this.custom || this.builtin; },
+  get anthem() { return this.melody || this.anthemBuiltin; },
+  // «Ёлочка» — запасной вариант: не звучит, если радио включено и играет
+  get pre() { return preOn && !RADIO.covering() ? (this.prelude || this.preludeBuiltin) : null; },
+  async start() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = store.get("volume", 0.9);
+    this.master.connect(this.ctx.destination);
+    this.preGain = this.ctx.createGain();
+    this.preGain.gain.value = preVol;
+    this.preGain.connect(this.master);
+    try { await this.ctx.resume(); } catch (e) {}
+    renderYolochka().then(b => { this.preludeBuiltin = b; updatePreWhen(); }).catch(() => {});
+    fetch(ASSET + "anthem.mp4").then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+      .then(ab => this.decode(ab)).then(b => { this.anthemBuiltin = b; if (!this.melody) $("melStatus").textContent = "Встроенный гимн · " + fmtDur(b.duration); })
+      .catch(() => { this.anthemFailed = true; if (!this.melody) $("melStatus").textContent = "Встроенный гимн не загрузился"; });
+    // Запись боя качается в фоне: сцена уже идёт, до полуночи звук успеет загрузиться.
+    this.loading = true;
+    fetch(ASSET + "kuranty.mp4")
+      .then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+      .then(ab => this.decode(ab))
+      .then(b => { this.builtin = b; this.reset(); })
+      .catch(() => {
+        $("recStatus").textContent = "Встроенная запись не загрузилась: звучит синтез";
+        if (!this.rec) this.synth = synthBell(this.ctx, 98, 9, 0.9);
+      })
+      .finally(() => { this.loading = false; });
+  },
+  decode(ab) { return new Promise((res, rej) => this.ctx.decodeAudioData(ab, res, rej)); },
+  play(buf, delay, offset = 0, duration, dest) {
+    if (!this.ctx || !buf || offset >= buf.duration) return;
+    const s = this.ctx.createBufferSource(); s.buffer = buf; s.connect(dest || this.master);
+    const when = this.ctx.currentTime + Math.max(0, delay) + 0.005;
+    if (duration != null) s.start(when, Math.max(0, offset), Math.max(0.01, duration)); else s.start(when, Math.max(0, offset));
+    this.sources.add(s); s.onended = () => this.sources.delete(s);
+  },
+  reset() {
+    for (const s of this.sources) { try { s.stop(); } catch (e) {} }
+    this.sources.clear(); this.scheduled.clear();
+  },
+  at(key, time, now, fn) {
+    if (time > now - 0.05 && time < now + 1.5 && !this.scheduled.has(key)) { this.scheduled.set(key, time); fn(Math.max(0, time - now)); }
+  },
+  // Один удар: последний (12-й) удар из записи — он затухает без наложения следующего.
+  strike(delay) {
+    const r = this.rec;
+    if (r) {
+      const t = meta.strikes && meta.strikes.length >= 12 ? meta.strikes[11] : alignment() + 11 * meta.strikeInterval;
+      this.play(r, delay, Math.max(0, t - 0.05), Math.min(3.4, r.duration - t + 0.05));
+    } else if (this.synth) this.play(this.synth, delay);
+  },
+  // Перезвон перед боем: начало записи до первого удара.
+  perezvon(delay, offset) {
+    const r = this.rec, a = alignment();
+    if (r && a > 1) this.play(r, delay, offset, Math.max(0.01, a - 0.2 - offset));
+  },
+  tick() {
+    if (!this.ctx) return;
+    if (this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+    const t = nowVirt();
+    for (const [k, v] of this.scheduled) if (v < t - 30) this.scheduled.delete(k);
+    const sod = (((t + MSK_OFF) % 86400) + 86400) % 86400;
+    const midnight = sod < 43200 ? t - sod : t - sod + 86400;
+    const last = offsetOf(11), a = alignment();
+    const once = (name, buf, start, dest) => {
+      if (!buf) return;
+      const key = name + Math.round(midnight);
+      if (!this.scheduled.has(key) && t > start - 1.5 && t < start + buf.duration - 0.3) {
+        this.scheduled.set(key, start + buf.duration);
+        const d = start - t;
+        this.play(buf, d > 0 ? d : 0, d > 0 ? 0 : -d, undefined, dest);
+      }
+    };
+    const pre = this.pre;
+    if (pre) once("pre", pre, midnight - a - preLead - pre.duration, this.preGain);
+    once("rec", this.rec, midnight - a);
+    once("mel", this.anthem, midnight + last + melodyPause);
+    once("sal", this.salute, midnight + last + 1.5);
+    const hourStart = Math.floor(t / 3600) * 3600;
+    for (const hs of [hourStart, hourStart + 3600]) {
+      const hod = Math.floor((((hs + MSK_OFF) % 86400) + 86400) % 86400 / 3600);
+      if (hod === 0 && this.rec) continue;            // полночь — целиком записью
+      const n = hod % 12 === 0 ? 12 : hod % 12;
+      const pz = hs - a;
+      if (!this.scheduled.has("p" + hs) && t > pz - 1.5 && t < hs - 0.5) {
+        this.scheduled.set("p" + hs, hs);
+        const d = pz - t;
+        this.perezvon(d > 0 ? d : 0, d > 0 ? 0 : -d);
+      }
+      for (let i = 0; i < n; i++) this.at(`s${hs}-${i}`, hs + offsetOf(i), t, d => this.strike(d));
+    }
+  }
+};
+
+/* ---------- интернет-радио ---------- */
+// Обычный <audio> без Web Audio: так поток с чужого сервера играет без CORS.
+// На iPhone громкость элемента менять нельзя, поэтому там затихание мгновенное.
+const RADIO = {
+  el: new Audio(),
+  on: store.get("radioOn", false),
+  url: store.get("radioUrl", "https://radiorecord.hostingradio.ru/christmas96.aacp"),
+  lead: store.get("radioLead", 3),
+  vol: store.get("radioVol", 0.8),
+  resume: store.get("radioResume", true),
+  playing: false, muted: false, okAt: 0, fadeTimer: 0, retryTimer: 0,
+  covering() { return this.on && this.okAt > 0 && Date.now() - this.okAt < 60000; },
+  // короткое имя станции для виджета на сцене
+  label() {
+    const sel = $("radioSel");
+    if (sel) {
+      const opt = Array.prototype.find.call(sel.options, o => o.value === this.url);
+      if (opt) return opt.textContent.trim();
+    }
+    try { return new URL(this.url).hostname.replace(/^www\./, ""); } catch (e) { return "Своя станция"; }
+  },
+  status(text, off) { const el = $("radioStatus"); el.textContent = text; el.classList.toggle("off", !!off); },
+  window(t) {  // [начало затихания, момент возврата] вокруг ближайшей полуночи (виртуальное время)
+    const sod = (((t + MSK_OFF) % 86400) + 86400) % 86400;
+    const midnight = sod < 43200 ? t - sod : t - sod + 86400;
+    const stop = midnight - alignment() - this.lead;
+    const back = midnight + offsetOf(11) + melodyPause + anthemLen() + 2;
+    return { stop, back };
+  },
+  start() {
+    clearTimeout(this.retryTimer);
+    if (!this.url) { this.status("Укажите адрес потока", true); return; }
+    this.el.src = this.url;
+    try { this.el.volume = this.vol; } catch (e) {}
+    this.status("Подключение…");
+    const p = this.el.play();
+    if (p && p.catch) p.catch(e => this.status("Не удалось включить: " + (e && e.name === "NotAllowedError" ? "нажмите кнопку ещё раз" : "поток недоступен"), true));
+  },
+  stop(fade) {
+    clearInterval(this.fadeTimer); clearTimeout(this.retryTimer);
+    const end = () => { this.el.pause(); this.el.removeAttribute("src"); this.el.load(); this.playing = false; };
+    if (!fade) { end(); return; }
+    let v = this.el.volume;
+    this.fadeTimer = setInterval(() => {
+      v -= this.vol / 30;
+      if (v <= 0.01) { clearInterval(this.fadeTimer); end(); }
+      else try { this.el.volume = v; } catch (e) {}
+    }, 100);
+  },
+  tick(t) {
+    const w = this.window(t);
+    const inWindow = t >= w.stop - 3 && t < w.back;
+    if (this.on && inWindow && !this.muted) {
+      this.muted = true;
+      if (this.playing || this.el.src) this.stop(true);
+      this.status(this.resume ? "Затихло перед курантами, включится после гимна" : "Затихло перед курантами");
+    }
+    if (this.muted && !inWindow) {
+      this.muted = false;
+      if (this.on && this.resume && t < w.back + 600) this.start();
+      else if (this.on && !this.resume) { this.on = false; store.set("radioOn", false); syncRadioUi(); this.status("Выключено", true); }
+    }
+  }
+};
+RADIO.el.preload = "none";
+RADIO.el.addEventListener("playing", () => {
+  RADIO.playing = true; RADIO.okAt = Date.now();
+  const opt = [...$("radioSel").options].find(o => o.value === RADIO.url);
+  RADIO.status("Играет" + (opt ? ": " + opt.textContent : ""));
+});
+RADIO.el.addEventListener("timeupdate", () => { if (RADIO.playing) RADIO.okAt = Date.now(); });
+RADIO.el.addEventListener("waiting", () => { if (RADIO.on && !RADIO.muted) RADIO.status("Буферизация…"); });
+RADIO.el.addEventListener("error", () => {
+  if (!RADIO.on || RADIO.muted || !RADIO.el.getAttribute("src")) return;
+  RADIO.playing = false; RADIO.okAt = 0;
+  RADIO.status("Поток недоступен, повтор через 10 с. Если не заработает — выберите другую станцию.", true);
+  RADIO.retryTimer = setTimeout(() => { if (RADIO.on && !RADIO.muted) RADIO.start(); }, 10000);
+});
+function syncRadioUi() {
+  $("radioToggle").textContent = RADIO.on ? "Выключить радио" : "Включить радио";
+  const opt = [...$("radioSel").options].find(o => o.value === RADIO.url);
+  $("radioSel").value = opt ? RADIO.url : "custom";
+  $("radioUrlField").hidden = !!opt;
+  $("radioUrl").value = opt ? "" : RADIO.url;
+  $("radioResume").checked = RADIO.resume;
+  updateRadioWhen();
+}
+function updateRadioWhen() {
+  const w = RADIO.window(nowVirt());
+  $("radioWhen").textContent = `Затихнет в ${hms(w.stop - 3)}` + (RADIO.resume ? `, включится снова около ${hms(w.back)}.` : ".");
+}
+function radioEnable(on) {
+  RADIO.on = on; store.set("radioOn", on);
+  if (on) {
+    const w = RADIO.window(nowVirt()), t = nowVirt();
+    if (t >= w.stop - 3 && t < w.back) { RADIO.muted = true; RADIO.status("Включится после гимна"); }
+    else RADIO.start();
+  } else { RADIO.stop(false); RADIO.muted = false; RADIO.okAt = 0; RADIO.status("Выключено", true); }
+  syncRadioUi(); AUD.reset();
+}
+
+/* ---------- выбранные файлы хранятся в браузере (IndexedDB) ---------- */
+const idb = {
+  open() {
+    return new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open("kuranty", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("files");
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    });
+  },
+  async put(k, v) { try { const db = await this.open(); await new Promise((res, rej) => { const tx = db.transaction("files", "readwrite"); tx.objectStore("files").put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); } catch (e) {} },
+  async del(k) { try { const db = await this.open(); await new Promise(res => { const tx = db.transaction("files", "readwrite"); tx.objectStore("files").delete(k); tx.oncomplete = res; tx.onerror = res; }); } catch (e) {} },
+  async get(k) { try { const db = await this.open(); return await new Promise((res, rej) => { const r = db.transaction("files").objectStore("files").get(k); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); } catch (e) { return null; } }
+};
+const $ = id => document.getElementById(id);
+const SLOTS = { melody: "melStatus", custom: "recStatus", salute: "salStatus", prelude: "preStatus" };
+const PREFIX = { melody: "Свой гимн: ", custom: "Своя запись: ", prelude: "Своя мелодия: ", salute: "" };
+const fmtDur = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+async function loadSound(slot, name, data, save) {
+  const el = $(SLOTS[slot]);
+  if (!AUD.ctx) { el.textContent = "Сначала нажмите «Начать», затем выберите файл ещё раз"; return; }
+  try {
+    if (save) await idb.put(slot, { name, data: data.slice(0) });
+    const buf = await AUD.decode(data.slice(0));
+    AUD[slot] = buf; AUD.reset();
+    el.textContent = PREFIX[slot] + `${name} · ${fmtDur(buf.duration)}`;
+    el.classList.remove("off");
+    if (slot === "prelude") updatePreWhen();
+  } catch (e) {
+    el.textContent = "Не удалось прочитать файл. Попробуйте mp3 или m4a.";
+  }
+}
+async function restoreSounds() {
+  for (const slot of Object.keys(SLOTS)) {
+    const v = await idb.get(slot);
+    if (v && v.data) await loadSound(slot, v.name, v.data, false);
+  }
+}
+
+/* ============================ интерфейс ============================ */
+const panel = $("panel"), gear = $("gear");
+function fmtCorr() { $("corrVal").textContent = (correction >= 0 ? "+" : "−") + Math.abs(correction).toFixed(1).replace(".", ",") + " с"; }
+function setCorrection(v) { correction = Math.round(v * 10) / 10; store.set("correction", correction); fmtCorr(); AUD.reset(); }
+function togglePanel(open) { panel.hidden = open === undefined ? !panel.hidden : !open; if (!panel.hidden) wake(); }
+function toggleDemo() {
+  if (demo) demo = null;
+  else {
+    const real = Date.now() / 1000, msk = real + correction + MSK_OFF;
+    demo = { real, virtual: Math.floor(msk / 86400) * 86400 + 86400 - 75 - MSK_OFF };
+  }
+  $("demo").textContent = demo ? "Вернуться к реальному времени" : "Показать полночь сейчас";
+  AUD.reset();
+}
+let started = false, idleTimer = 0;
+function wake() {
+  if (!started) return;
+  gear.hidden = false; gear.classList.remove("idle");
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { if (panel.hidden) gear.classList.add("idle"); }, 3500);
+}
+async function keepAwake() {
+  try { if ("wakeLock" in navigator && document.visibilityState === "visible") await navigator.wakeLock.request("screen"); } catch (e) {}
+}
+function fillMetaFields() {
+  $("first").value = alignment();
+  $("interval").value = meta.strikeInterval;
+  $("strikes").value = meta.strikes ? meta.strikes.join(", ") : "";
+}
+$("go").addEventListener("click", async () => {
+  // Всё, что требует нажатия (радио, полный экран, звук), запускаем сразу, без ожидания загрузок.
+  if (RADIO.on) radioEnable(true);
+  try { const el = document.documentElement; if (el.requestFullscreen) el.requestFullscreen().catch(() => {}); } catch (e) {}
+  started = true;
+  $("start").hidden = true;
+  wake();
+  keepAwake();
+  await AUD.start();
+  restoreSounds();
+});
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && started) keepAwake(); });
+gear.addEventListener("click", () => togglePanel());
+$("close").addEventListener("click", () => togglePanel(false));
+document.querySelectorAll("[data-nudge]").forEach(b => b.addEventListener("click", () => setCorrection(correction + parseFloat(b.dataset.nudge))));
+$("corrReset").addEventListener("click", () => setCorrection(0));
+$("demo").addEventListener("click", toggleDemo);
+$("testBell").addEventListener("click", () => AUD.strike(0));
+$("preview").addEventListener("click", () => { if (AUD.rec) { AUD.reset(); AUD.play(AUD.rec, 0, Math.max(0, alignment() - 2)); } });
+$("melPreview").addEventListener("click", () => {
+  if (!AUD.anthem) { $("melStatus").textContent = "Гимн ещё загружается"; return; }
+  AUD.reset(); AUD.play(AUD.anthem, 0, 0, 25);
+});
+$("melClear").addEventListener("click", async () => {
+  AUD.melody = null; AUD.reset(); await idb.del("melody");
+  $("melStatus").textContent = AUD.anthemBuiltin ? "Встроенный гимн · " + fmtDur(AUD.anthemBuiltin.duration) : "Встроенный гимн";
+});
+$("melPause").value = melodyPause;
+$("melPause").addEventListener("change", e => { melodyPause = Math.max(0, parseFloat(e.target.value) || 0); store.set("anthemPause", melodyPause); AUD.reset(); });
+
+// мелодия до курантов
+function updatePreWhen() {
+  const b = AUD.prelude || AUD.preludeBuiltin, el = $("preWhen");
+  if (!preOn) { el.textContent = "Мелодия выключена."; return; }
+  if (!b) { el.textContent = ""; return; }
+  const end = -alignment() - preLead, start = end - b.duration;
+  const f = s => hms(s - MSK_OFF + 864000);   // s — секунды относительно полуночи
+  el.textContent = `Начнётся в ${f(start)}, закончится в ${f(end)} (длительность ${fmtDur(b.duration)}).`;
+}
+$("preOn").checked = preOn;
+$("preOn").addEventListener("change", e => { preOn = e.target.checked; store.set("preOn", preOn); AUD.reset(); updatePreWhen(); });
+$("preLead").value = preLead;
+$("preLead").addEventListener("change", e => { preLead = Math.max(0, parseFloat(e.target.value) || 0); store.set("preLead", preLead); AUD.reset(); updatePreWhen(); });
+$("preVol").value = preVol;
+$("preVol").addEventListener("input", e => { preVol = parseFloat(e.target.value); store.set("preVol", preVol); if (AUD.preGain) AUD.preGain.gain.value = preVol; });
+$("prePreview").addEventListener("click", () => {
+  const b = AUD.prelude || AUD.preludeBuiltin;
+  if (!b) { $("preStatus").textContent = "Мелодия ещё готовится, попробуйте через секунду"; return; }
+  AUD.reset(); AUD.play(b, 0, 0, undefined, AUD.preGain);
+});
+$("preBuiltin").addEventListener("click", async () => {
+  AUD.prelude = null; AUD.reset(); await idb.del("prelude");
+  $("preStatus").textContent = "Встроенная: «В лесу родилась ёлочка»"; updatePreWhen();
+});
+$("recBuiltin").addEventListener("click", async () => {
+  AUD.custom = null; await idb.del("custom"); store.del("customMeta");
+  meta = Object.assign({}, BUILTIN_META); fillMetaFields(); AUD.reset();
+  $("recStatus").textContent = "Встроенная: перезвон и 12 ударов (Kremlin.ru)";
+});
+$("vol").value = store.get("volume", 0.9);
+$("vol").addEventListener("input", e => { const v = parseFloat(e.target.value); store.set("volume", v); if (AUD.master) AUD.master.gain.value = v; });
+for (const [id, slot] of [["recFile", "custom"], ["melFile", "melody"], ["salFile", "salute"], ["preFile", "prelude"]]) {
+  $(id).addEventListener("change", async e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) await loadSound(slot, f.name, await f.arrayBuffer(), true);
+  });
+}
+function saveMeta() {
+  const list = $("strikes").value.split(/[\s,;]+/).map(s => parseFloat(s.replace(",", "."))).filter(x => !isNaN(x));
+  meta = {
+    firstStrike: parseFloat($("first").value) || 0,
+    strikeInterval: Math.max(1, parseFloat($("interval").value) || 3.5),
+    strikes: list.length >= 2 ? list : null
+  };
+  if (meta.strikes) meta.firstStrike = meta.strikes[0];
+  store.set("customMeta", meta);
+  AUD.reset();
+}
+["first", "interval", "strikes"].forEach(id => $(id).addEventListener("change", saveMeta));
+fillMetaFields();
+document.addEventListener("keydown", e => {
+  if (e.target.matches && e.target.matches("input, textarea")) return;
+  if (e.key === "s" || e.key === "S" || e.key === "ы" || e.key === "Ы") { togglePanel(); e.preventDefault(); }
+  else if (e.key === " ") { toggleDemo(); e.preventDefault(); }
+  else if (e.key === "Escape") togglePanel(false);
+  else if (e.key === "ArrowUp") setCorrection(correction + 1);
+  else if (e.key === "ArrowDown") setCorrection(correction - 1);
+  else if (e.key === "ArrowRight") setCorrection(correction + 0.1);
+  else if (e.key === "ArrowLeft") setCorrection(correction - 0.1);
+});
+["pointermove", "pointerdown"].forEach(ev => window.addEventListener(ev, wake, { passive: true }));
+setInterval(() => {
+  AUD.tick();
+  if (started) RADIO.tick(nowVirt());
+  if (!panel.hidden) $("mskNow").textContent = hms(nowVirt(), true);
+}, 100);
+setInterval(() => { if (!panel.hidden) updateRadioWhen(); }, 1000);
+
+// радио: элементы настроек
+$("radioSel").addEventListener("change", e => {
+  const v = e.target.value;
+  $("radioUrlField").hidden = v !== "custom";
+  if (v === "custom") { $("radioUrl").focus(); return; }
+  RADIO.url = v; store.set("radioUrl", v);
+  if (RADIO.on && !RADIO.muted) RADIO.start();
+  else if (!RADIO.on) radioEnable(true);   // выбрали станцию — сразу включаем
+});
+$("radioUrl").addEventListener("change", e => {
+  const v = e.target.value.trim();
+  if (!/^https:\/\//i.test(v)) { RADIO.status("Нужен адрес, начинающийся с https://", true); return; }
+  RADIO.url = v; store.set("radioUrl", v);
+  if (RADIO.on && !RADIO.muted) RADIO.start();
+});
+$("radioToggle").addEventListener("click", () => radioEnable(!RADIO.on));
+$("radioLead").value = RADIO.lead;
+$("radioLead").addEventListener("change", e => { RADIO.lead = Math.max(0, parseFloat(e.target.value) || 0); store.set("radioLead", RADIO.lead); updateRadioWhen(); });
+$("radioVol").value = RADIO.vol;
+$("radioVol").addEventListener("input", e => { RADIO.vol = parseFloat(e.target.value); store.set("radioVol", RADIO.vol); try { if (RADIO.playing) RADIO.el.volume = RADIO.vol; } catch (err) {} });
+$("radioResume").addEventListener("change", e => { RADIO.resume = e.target.checked; store.set("radioResume", RADIO.resume); updateRadioWhen(); });
+syncRadioUi();
+if (RADIO.on) RADIO.status("Включится после нажатия «Начать»", true);
+fmtCorr();
+window.addEventListener("resize", resize);
+resize();
+requestAnimationFrame(render);
+</script>
