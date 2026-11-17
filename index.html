@@ -145,7 +145,7 @@ kbd { font: 500 0.78rem var(--ui); border: 1px solid var(--line); border-radius:
     </ol>
     <button class="primary" id="go" type="button">Начать</button>
     <p class="small">Чтобы увидеть полночь сразу, откройте настройки и нажмите «Показать полночь сейчас».</p>
-    <p class="credits">Фото: «<a href="https://commons.wikimedia.org/wiki/File:%D0%A1%D0%BF%D0%B0%D1%81%D1%81%D0%BA%D0%B0%D1%8F_%D0%B1%D0%B0%D1%88%D0%BD%D1%8F_%D0%94%D0%B5%D0%BA%D0%B0%D0%B1%D1%80%D1%8C_2015%D0%B3.jpg" target="_blank" rel="noopener">Спасская башня Декабрь 2015г.</a>», автор WM wm WM, CC BY-SA 4.0. Бой курантов и гимн: <a href="https://commons.wikimedia.org/wiki/File:%D0%9D%D0%BE%D0%B2%D0%BE%D0%B3%D0%BE%D0%B4%D0%BD%D0%B5%D0%B5_%D0%BE%D0%B1%D1%80%D0%B0%D1%89%D0%B5%D0%BD%D0%B8%D0%B5_%D0%94%D0%BC%D0%B8%D1%82%D1%80%D0%B8%D1%8F_%D0%9C%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D0%B5%D0%B2%D0%B0_31_%D0%B4%D0%B5%D0%BA%D0%B0%D0%B1%D1%80%D1%8F_2011._Kremlin.ru.webm" target="_blank" rel="noopener">Kremlin.ru, 31.12.2011</a>, CC BY 4.0. Циферблаты, стрелки, снег и салют дорисованы.</p>
+    <p class="credits">Фото: «<a href="https://commons.wikimedia.org/wiki/File:%D0%A1%D0%BF%D0%B0%D1%81%D1%81%D0%BA%D0%B0%D1%8F_%D0%B1%D0%B0%D1%88%D0%BD%D1%8F_%D0%94%D0%B5%D0%BA%D0%B0%D0%B1%D1%80%D1%8C_2015%D0%B3.jpg" target="_blank" rel="noopener">Спасская башня Декабрь 2015г.</a>», автор WM wm WM, CC BY-SA 4.0. Бой курантов и гимн: <a href="https://commons.wikimedia.org/wiki/File:%D0%9D%D0%BE%D0%B2%D0%BE%D0%B3%D0%BE%D0%B4%D0%BD%D0%B5%D0%B5_%D0%BE%D0%B1%D1%80%D0%B0%D1%89%D0%B5%D0%BD%D0%B8%D0%B5_%D0%94%D0%BC%D0%B8%D1%82%D1%80%D0%B8%D1%8F_%D0%9C%D0%B5%D0%B4%D0%B2%D0%B5%D0%B4%D0%B5%D0%B2%D0%B0_31_%D0%B4%D0%B5%D0%BA%D0%B0%D0%B1%D1%80%D1%8F_2011._Kremlin.ru.webm" target="_blank" rel="noopener">Kremlin.ru, 31.12.2011</a>, CC BY 4.0. Портреты в открытке: <a href="https://commons.wikimedia.org/wiki/File:Izmaylovo-ded-moroz-holiday-2025-father-frost.jpg" target="_blank" rel="noopener">Дед Мороз</a> и <a href="https://commons.wikimedia.org/wiki/File:Izmaylovo-ded-moroz-holiday-2025-snegurochka-smiling.jpg" target="_blank" rel="noopener">Снегурочка</a>, праздник в Измайлове, CC BY-SA 3.0, Wikimedia Commons. Циферблаты, стрелки, снег и салют дорисованы.</p>
   </div>
 </div>
 
@@ -278,7 +278,7 @@ kbd { font: 500 0.78rem var(--ui); border: 1px solid var(--line); border-radius:
 
   <section>
     <h3>Источники</h3>
-    <p class="hint">Фото: WM wm WM, «Спасская башня Декабрь 2015г.», CC BY-SA 4.0, Wikimedia Commons. Бой курантов и гимн: Kremlin.ru, новогоднее обращение 31.12.2011, CC BY 4.0, Wikimedia Commons. «В лесу родилась ёлочка»: музыка Л. Бекмана (1905), общественное достояние; аранжировка синтезируется в браузере. Циферблаты, стрелки, снег и салют дорисованы поверх фото.</p>
+    <p class="hint">Фото: WM wm WM, «Спасская башня Декабрь 2015г.», CC BY-SA 4.0, Wikimedia Commons. Бой курантов и гимн: Kremlin.ru, новогоднее обращение 31.12.2011, CC BY 4.0, Wikimedia Commons. «В лесу родилась ёлочка»: музыка Л. Бекмана (1905), общественное достояние; аранжировка синтезируется в браузере. Портреты Деда Мороза и Снегурочки в открытке: фото с праздника в Измайлове, CC BY-SA 3.0, Wikimedia Commons. Голос поздравления синтезирован нейросетью (Microsoft, ru-RU-DmitryNeural и ru-RU-SvetlanaNeural). Циферблаты, стрелки, снег и салют дорисованы поверх фото.</p>
   </section>
 </aside>
 
@@ -320,7 +320,8 @@ function loadImg(key, file) {
 let photoLayer = null;   // фото с растушёванными боковыми краями
 const assetsReady = Promise.all([
   loadImg("photo", "photo.jpg"), loadImg("clock", "photo_clock.jpg"), loadImg("bg", "side_bg.jpg"),
-  loadImg("mask", "sky_mask.png"), loadImg("occlR", "occl_R.png"), loadImg("occlL", "occl_L.png")
+  loadImg("mask", "sky_mask.png"), loadImg("occlR", "occl_R.png"), loadImg("occlL", "occl_L.png"),
+  loadImg("greetDm", "greet_dm.png"), loadImg("greetSneg", "greet_sneg.png")
 ]).then(() => {
   const p = IMG.photo;
   if (!p) return;
@@ -1057,15 +1058,6 @@ function greetingCard(st) {
   warm.addColorStop(1, "rgba(255,150,70,0)");
   g.fillStyle = warm; g.fillRect(X, Y, cw, ch);
   g.globalCompositeOperation = "source-over";
-  // луна в небе открытки
-  const mnx = X + cw * 0.76, mny = Y + ch * 0.16, mr = cw * 0.045;
-  g.globalCompositeOperation = "lighter";
-  const mgl = g.createRadialGradient(mnx, mny, mr * 0.6, mnx, mny, mr * 4);
-  mgl.addColorStop(0, "rgba(255,246,224,0.22)");
-  mgl.addColorStop(1, "rgba(255,246,224,0)");
-  g.fillStyle = mgl; g.beginPath(); g.arc(mnx, mny, mr * 4, 0, TAU); g.fill();
-  g.globalCompositeOperation = "source-over";
-  g.fillStyle = "rgba(255,248,228,0.82)"; g.beginPath(); g.arc(mnx, mny, mr, 0, TAU); g.fill();
   // снежный наст
   g.beginPath();
   g.moveTo(X, sy + ch * 0.02);
@@ -1085,18 +1077,19 @@ function greetingCard(st) {
   fir(X + cw * 0.12, sy + ch * 0.01, ch * 0.032, ch * 0.16);
   fir(X + cw * 0.21, sy + ch * 0.005, ch * 0.024, ch * 0.12);
   fir(X + cw * 0.88, sy + ch * 0.02, ch * 0.030, ch * 0.145);
-  // фигуры: тёплый контровой свет, поверх — тёмный силуэт
-  const dmX = X + cw * 0.42, dmY = sy + ch * 0.03, dmS = ch * 0.245;
-  const smX = X + cw * 0.635, smY = sy + ch * 0.03, smS = ch * 0.225;
-  g.save();
-  g.translate(-1.6, -1.6);
-  g.fillStyle = "rgba(255,198,132,0.45)";
-  figureDedMoroz(dmX, dmY, dmS); figureSnegurochka(smX, smY, smS);
-  g.restore();
-  g.fillStyle = "rgba(6,8,16,0.98)";
-  figureDedMoroz(dmX, dmY, dmS); figureSnegurochka(smX, smY, smS);
-  // фонарик в руке Снегурочки — единственный тёплый огонёк сцены
-  lantern(smX - smS * 0.19, smY - smS * 0.30, smS);
+  // портреты: настоящие Дед Мороз и Снегурочка, края мягко растворены в ночи
+  const ps = cw * 0.56, py = Y + ch * 0.415;
+  const pDm = X + cw * 0.270, pSg = X + cw * 0.730;
+  for (const [img, px] of [[IMG.greetDm, pDm], [IMG.greetSneg, pSg]]) {
+    if (!img) continue;
+    g.globalCompositeOperation = "lighter";
+    const hgl = g.createRadialGradient(px, py, 0, px, py, ps * 0.46);
+    hgl.addColorStop(0, "rgba(255,176,104,0.20)");
+    hgl.addColorStop(1, "rgba(255,176,104,0)");
+    g.fillStyle = hgl; g.beginPath(); g.arc(px, py, ps * 0.46, 0, TAU); g.fill();
+    g.globalCompositeOperation = "source-over";
+    g.drawImage(img, px - ps / 2, py - ps / 2, ps, ps);
+  }
   // снег внутри открытки
   g.fillStyle = "rgba(255,250,240,0.75)";
   for (let i = 0; i < 26; i++) {
