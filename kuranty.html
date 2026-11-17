@@ -444,7 +444,8 @@ function frameState(t) {
   const anthemEnd = last + melodyPause + gLen;
   const confT = dt > anthemEnd && dt < anthemEnd + 4.5 ? dt - anthemEnd : null;
   // поздравление: секунды с его начала; видно от появления до первого удара
-  const grt = AUD.greetAt != null ? t - AUD.greetAt : (demo ? 1.5 : dt + GREET.lead);
+  const grt = AUD.greetAt != null ? t - AUD.greetAt
+    : demo ? t - (demo.virtual + MSK_OFF) : dt + GREET.lead;
   const greet = (isNY || demo) && grt >= 0 ? grt : null;
   // в демо открытка живёт от нажатия кнопки, в обычном режиме — до наезда камеры
   const greetFade = demo
@@ -1345,6 +1346,7 @@ const AUD = {
   ctx: null, master: null, preGain: null, builtin: null, custom: null, melody: null, salute: null, synth: null,
   anthemBuiltin: null, prelude: null, preludeBuiltin: null,
   scheduled: new Map(), sources: new Set(),
+  greetAt: null, greetDone: false,   // поздравление играет один раз за вечер
   get rec() { return this.custom || this.builtin; },
   get anthem() { return this.melody || this.anthemBuiltin; },
   // «Ёлочка» — запасной вариант: не звучит, если радио включено и играет
@@ -1430,14 +1432,16 @@ const AUD = {
     if (pre) once("pre", pre, midnight - a - preLead - pre.duration, this.preGain);
     once("rec", this.rec, midnight - a);
     // поздравление: голос стартует от фактического момента, субтитры идут за ним
-    if (this.greetBufs && this.greetAt == null) {
+    // один раз за вечер: в окне до полуночи (или по кнопке «полночь сейчас»);
+    // greetAt не сбрасываем — иначе после боя курантов открытка и голос оживают снова
+    if (this.greetBufs && !this.greetDone) {
       const inWindow = t > midnight - GREET.lead && t < midnight - 95;
-      if (inWindow || (demo && t > midnight - 90)) {
+      if (inWindow || demo) {
+        this.greetDone = true;
         this.greetAt = t;
         this.greetBufs.forEach((b, i) => this.play(b, GREET.cues[i][0]));
       }
     }
-    if (this.greetAt != null && t > midnight + 5) this.greetAt = null;
     once("mel", this.anthem, midnight + last + melodyPause);
     once("sal", this.salute, midnight + last + 1.5);
     const hourStart = Math.floor(t / 3600) * 3600;
@@ -1621,6 +1625,7 @@ function toggleDemo() {
     demo = { real, virtual: Math.floor(msk / 86400) * 86400 + 86400 - 75 - MSK_OFF };
   }
   $("demo").textContent = demo ? "Вернуться к реальному времени" : "Показать полночь сейчас";
+  AUD.greetAt = null; AUD.greetDone = false;
   AUD.reset();
 }
 let started = false, idleTimer = 0;
