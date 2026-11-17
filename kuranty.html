@@ -429,10 +429,14 @@ function frameState(t) {
   const anthemEnd = last + melodyPause + gLen;
   const confT = dt > anthemEnd && dt < anthemEnd + 4.5 ? dt - anthemEnd : null;
   // поздравление: секунды с его начала; видно от появления до первого удара
-  const grt = AUD.greetAt != null ? t - AUD.greetAt : dt + GREET.lead;
+  const grt = AUD.greetAt != null ? t - AUD.greetAt : (demo ? 1.5 : dt + GREET.lead);
   const greet = (isNY || demo) && grt >= 0 ? grt : null;
+  // в демо открытка живёт от нажатия кнопки, в обычном режиме — до наезда камеры
+  const greetFade = demo
+    ? 1 - smooth((grt - GREET.total - 6) / 2)
+    : 1 - smooth((dt + 66) / 8);
   return {
-    msk, sod, dt, k, zoom, view, pulse, strikesDone, hourIdx: hour % 12, confT, greet,
+    msk, sod, dt, k, zoom, view, pulse, strikesDone, hourIdx: hour % 12, confT, greet, greetFade,
     fwT: dt > last + melodyPause && dt < 900 ? dt - last - melodyPause : null,
     greetA, year, toNY: Date.UTC(nowY + 1, 0, 1) / 1000 - msk, anim: msk % 345600,
     minuteA: (sod % 3600) / 3600 * TAU, hourA: (sod % 43200) / 43200 * TAU
@@ -996,7 +1000,7 @@ function greetingCard(st) {
   const ch = (wide ? 0.60 : 0.38) * Hh, cw = ch * 0.72;
   const X = wide ? Math.min(W * 0.055, W - cw - 24 * uu) : (W - cw) / 2;
   const Y = wide ? Hh * 0.43 - ch / 2 : Hh * 0.10;
-  const a = smooth(t / 1.3) * (1 - smooth((st.dt + 66) / 8));
+  const a = smooth(t / 1.3) * st.greetFade;
   if (a <= 0.004) return;
   const serifCard = px => `600 ${Math.round(px)}px "Cormorant Garamond", Georgia, serif`;
   g.save();
@@ -1410,9 +1414,9 @@ const AUD = {
     if (pre) once("pre", pre, midnight - a - preLead - pre.duration, this.preGain);
     once("rec", this.rec, midnight - a);
     // поздравление: голос стартует от фактического момента, субтитры идут за ним
-    if (this.greetBuf && this.greetAt == null && t > midnight - GREET.lead && t < midnight - 25) {
-      this.greetAt = t;
-      this.play(this.greetBuf, 0);
+    if (this.greetBuf && this.greetAt == null) {
+      const inWindow = t > midnight - GREET.lead && t < midnight - 95;
+      if (inWindow || (demo && t > midnight - 90)) { this.greetAt = t; this.play(this.greetBuf, 0); }
     }
     if (this.greetAt != null && t > midnight + 5) this.greetAt = null;
     once("mel", this.anthem, midnight + last + melodyPause);
