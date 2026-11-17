@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "kuranty.html"
 OUT = ROOT / "site"
-ASSETS = ["photo.jpg", "photo_clock.jpg", "side_bg.jpg", "sky_mask.png",
+ASSETS = ["photo.jpg", "photo_clock.jpg", "greet_dm.png", "greet_sneg.png", "side_bg.jpg", "sky_mask.png",
           "occl_R.png", "occl_L.png", "kuranty.mp4", "anthem.mp4", "greet1.mp3", "greet2.mp3", "greet3.mp3", "greet4.mp3", "greet5.mp3"]
 
 html = SRC.read_text(encoding="utf-8")
